@@ -1,117 +1,105 @@
-# Repository Template
+# Cross-Charge
 
-This template is the starting point for new repositories in the `dynatrace-oss` organization.
+A [Dynatrace App](https://developer.dynatrace.com) that attributes Dynatrace Platform Subscription (DPS) licensing costs to individual departments, teams, or customers based on tags assigned to monitored entities — enabling automated cost chargeback across shared or multi-team environments.
 
-Creating a repository in `dynatrace-oss` establishes an ongoing ownership, maintenance, and lifecycle commitment. Before a repository is published or actively used, the owning team must confirm that the repository has clear ownership, appropriate documentation, and the minimum required governance and automation in place.
+---
 
-## Purpose
+## What It Does
 
-Use this template when creating a new repository that will live in `dynatrace-oss`.
+Cross-Charge automates the full DPS cost attribution pipeline inside Dynatrace:
 
-This template provides a baseline structure for:
-- repository documentation
-- contribution guidance
-- community health files
-- basic automation
-- ownership and maintenance expectations
+1. **Fetch pricing** — pulls your account's rate card from the Dynatrace Accounts API (or uses published list prices as a fallback).
+2. **Query entities** — discovers monitored entities across all supported types: full-stack/infra/foundation/mainframe hosts, RUM apps, synthetic tests, Kubernetes namespaces, serverless services, and custom generic entity types.
+3. **Normalize tags** — maps configurable cost-center tag keys onto each entity, substituting `"unknown"` for any entity missing a tag so every record has consistent dimensions.
+4. **Calculate costs** — multiplies each entity's previous-day billing metric consumption by its rate card price to produce a per-entity cost figure.
+5. **Emit bizevents** — writes the results as CloudEvents to the Dynatrace Grail `bizevents` table, optionally forwarding them to a second environment for centralized reporting.
+6. **Visualize** — a bundled Gen3 dashboard and an in-app DQL Query Tab let you explore cost breakdowns by entity type, cost center, or any tag dimension.
 
-## Required actions after repository creation
+---
 
-After creating a repository from this template, the owning team must complete the following before the repository is considered ready for active use or publication:
+## Getting Started
 
-### 1. Replace placeholder content
-Update this README to describe:
-- what the repository contains
-- who it is for
-- how it should be used
-- how contributors can get started
-- any important limitations, prerequisites, or support boundaries
+### Prerequisites
 
-### 2. Confirm repository ownership
-Each repository must have:
-- a primary maintainer, DRI, or owning team
-- a documented support model
-- a `CODEOWNERS` file that reflects the responsible team or maintainers
+- **Node.js** `>=22`
+- Access to a **Dynatrace tenant** with:
+  - All OAuth scopes listed in the [Design Document](docs/NewDesign.md#required-oauth-scopes)
 
-Ownership must remain current over time. Repositories without durable ownership may be subject to review, restriction, or archival.
+### Install
 
-### 3. Review inherited community health files
-Some community health files may be inherited from organization defaults. The owning team is responsible for reviewing them and deciding whether repository-specific versions are needed.
+```bash
+npm install
+```
 
-At minimum, review:
-- `CONTRIBUTING.md`
-- `CODE_OF_CONDUCT.md`
-- `SECURITY.md`
-- `SUPPORT.md`
+### Run Locally
 
-If the repository has different contribution, security, or support expectations than the organization defaults, add repository-specific versions.
+You do not need to deploy the app to use it. Running it locally connects to whichever Dynatrace tenant is configured in `app.config.json`.
 
-### 4. Confirm licensing
-Each repository must include the correct license for its contents. Do not assume the default is always appropriate. Confirm the intended license before publishing. More information on licensing can be found [here](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/licensing-a-repository).
+```bash
+npm run start
+```
 
-### 5. Add or validate baseline automation
-At minimum, the repository should include automation appropriate to its contents. This usually includes:
-- Markdown linting
-- validation for configuration files where applicable
-- dependency update automation
-- any language-specific test or lint workflows needed for the project
+This opens the app in your browser with hot reload enabled. All data is fetched live from your configured Dynatrace environment.
 
-### 6. Validate publication readiness
-Before making a repository public, confirm that:
-- the repository has a clear purpose
-- ownership is defined
-- required documentation is present
-- the support model is clear
-- secrets are not present
-- branch protection and review expectations are in place where needed
+### Deploy to Dynatrace
 
-## Publication and support expectations
+```bash
+npm run deploy
+```
 
-Repositories in `dynatrace-oss` are not automatically considered commercially supported products.
+Builds and deploys the app directly to the environment URL in `app.config.json`.
 
-Unless explicitly stated otherwise, maintainers should make support expectations clear in the repository documentation. If a project is community-supported, experimental, internal-only, or provided without official product support, that should be stated plainly in the README and/or `SUPPORT.md`.
+---
 
-Example language:
+## Configuration
 
-> This project is open source and maintained by Dynatrace contributors. It is not covered by standard Dynatrace commercial support unless explicitly stated otherwise.
+All configuration lives in **`app.config.json`** at the project root. There are no `.env` files — the Dynatrace SDK handles auth context.
 
-## Minimum recommended repository contents
+Update `environmentUrl` to point at your own tenant before running or deploying.
 
-The following should usually be present in each repository:
+> If any required OAuth scope is missing, the workflow install button is disabled and a warning is shown. The rest of the app (dashboard link, settings links, DQL Query Tab) remains fully accessible.
 
-- `README.md`
-- `LICENSE`
-- `CODEOWNERS`
-- `CONTRIBUTING.md` or inherited equivalent
-- `SECURITY.md` or inherited equivalent
-- `SUPPORT.md` or inherited equivalent
-- `AGENTS.md` or inherited equivalent 
-- issue templates
-- pull request template
-- baseline CI workflows
+---
 
-## Repository lifecycle
+## Architecture & Design
 
-Creating a repository is the beginning of a lifecycle, not a one-time setup step. Repository owners are expected to maintain the repository over time, including:
-- keeping ownership information current
-- reviewing dependency and automation health
-- responding to contribution and support signals as appropriate
-- archiving or transferring the repository when it is no longer actively maintained or no longer belongs in the organization
+For a full breakdown of the architecture, all seven workflow actions, the end-to-end data flow, required OAuth scopes, and key file locations, see the **[Design Document](docs/Architecture.md)**.
 
-## AI assistant guidance
+---
 
-This repository includes repository-level guidance for AI coding assistants:
+## Routes
 
-- `AGENTS.md` provides repository expectations and review guidance for agent-based coding tools
-- `.github/copilot-instructions.md` provides repository-wide instructions for GitHub Copilot
+The app is served under the base path `/ui`.
 
-## Repository Exemplars
+| Route       | Page                                                                                                  |
+| ----------- | ----------------------------------------------------------------------------------------------------- |
+| `/ui/`      | **Home** — install the Cross-Charge workflow, configure app settings, open the reporting dashboard    |
+| `/ui/query` | **DQL Query Tab** — run and modify DQL queries against Cross-Charge bizevents in the Grail data store |
 
-Looking for some inspiration? Here are a few Dynatrace Open Source repo examples:
-- (https://github.com/dynatrace-oss/dynatrace-managed-mcp)
-- (https://github.com/dynatrace-oss/hash4j)
-- (https://github.com/dynatrace-oss/kimera)
+---
 
-## Questions
+## Tech Stack
 
-For questions about repository setup, lifecycle expectations, or placement in `dynatrace-oss`, contact the [Open Source Program](https://dynatrace.sharepoint.com/sites/DevRel/SitePages/Open-Source-Program-Office.aspx).
+| Layer                 | Technology                                   |
+| --------------------- | -------------------------------------------- |
+| Framework             | React 18, React Router 7                     |
+| Language              | TypeScript 5.9                               |
+| State & Data Fetching | Dynatrace SDK React Hooks, SDK Clients       |
+| UI Components         | Dynatrace Strato Components + Design Tokens  |
+| Build Tool            | Dynatrace App Toolkit (`dt-app`)             |
+| i18n                  | React-Intl                                   |
+| Backend               | Dynatrace SDK clients (no standalone server) |
+
+---
+
+## Limitations
+
+- **Platform-locked** — the app runs inside the Dynatrace browser shell. It cannot be deployed as a standalone web server.
+- **Permission-gated install** — the workflow install button is disabled and a warning is displayed if any required OAuth scope is missing. The rest of the UI remains accessible.
+- **Node.js `>=16.13.0`** is required for local development.
+
+---
+
+> **This repository is archived and is no longer maintained.**
+>
+> No bug fixes, feature updates, or pull requests will be accepted. The code is provided as-is for reference only. For supported Dynatrace app development resources, visit the [Dynatrace Developer Portal](https://developer.dynatrace.com).

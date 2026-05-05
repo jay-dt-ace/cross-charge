@@ -1,0 +1,10 @@
+{
+  "rate_card": {
+    "endTime": "2050-12-31T23:59:59Z",
+    "startTime": "2020-01-01T00:00:00Z",
+    "quoteNumber": "default",
+    "currencyCode": "USD",
+    "capabilities": {}
+  },
+  "tag_keys": []
+}

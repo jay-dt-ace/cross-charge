@@ -1,0 +1,5 @@
+{
+  "entity_ids": ["ENTITY_1234", "ENTITY_345"],
+  "entity_type": "",
+  "billing_metrics": ["builtin:test:billing_metrics"]
+}

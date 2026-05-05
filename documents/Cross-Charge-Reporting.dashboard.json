@@ -1,0 +1,1564 @@
+{
+  "version": 18,
+  "variables": [
+    {
+      "key": "Tenant",
+      "visible": true,
+      "type": "query",
+      "version": 1,
+      "editable": true,
+      "input": "// Set \"All\" option\ndata json:\"\"\"[\n{\"distinct_itens\": \"All\"}\n]\"\"\"\n| append [\n  fetch bizevents\n| filter  contains(event.provider, $Event_Provider)\n| fieldsAdd tempvar = if(isNotNull(tenant), tenant, else: \"No tenant\")\n| summarize distinct_itens = collectDistinct(tempvar)\n| expand distinct_itens\n| sort distinct_itens\n]\n",
+      "multiple": true,
+      "defaultValue": ["All"]
+    },
+    {
+      "key": "Module",
+      "visible": true,
+      "type": "query",
+      "version": 1,
+      "editable": true,
+      "input": "// Set \"All\" option\ndata json:\"\"\"[\n{\"distinct_itens\": \"All\"}\n]\"\"\"\n| append [\n  fetch bizevents\n| filter  contains(event.provider, $Event_Provider)\n| fieldsAdd tempvar = if(isNotNull(module), module, else: \"No Module\")\n| summarize distinct_itens = collectDistinct(tempvar)\n| expand distinct_itens\n| sort distinct_itens\n]\n",
+      "multiple": true,
+      "defaultValue": ["All"]
+    },
+    {
+      "key": "Default_Modules",
+      "visible": false,
+      "type": "csv",
+      "version": 1,
+      "editable": true,
+      "input": "\"DISCOVERY_MONITORING\",\"INFRASTRUCTURE_MONITORING\",\"FULLSTACK_MONITORING\",\"RUNTIME_VULNERABILITY_ANALYTICS\"",
+      "multiple": true,
+      "defaultValue": ["3420b2ac-f1cf-4b24-b62d-61ba1ba8ed05*"]
+    },
+    {
+      "key": "CostCenter",
+      "visible": true,
+      "type": "query",
+      "version": 1,
+      "editable": true,
+      "input": "// Set \"All\" option\ndata json:\"\"\"[\n{\"distinct_itens\": \"All\"}\n]\"\"\"\n| append [\n  fetch bizevents\n| filter  contains(event.provider, $Event_Provider)\n| fieldsAdd tempvar = if(isNotNull(CostCenter), CostCenter, else: \"No Cost Center\")\n| summarize distinct_itens = collectDistinct(tempvar)\n| expand distinct_itens\n| sort distinct_itens\n]\n",
+      "multiple": false,
+      "defaultValue": "All"
+    },
+    {
+      "key": "Event_Provider",
+      "visible": false,
+      "type": "text",
+      "version": 1,
+      "editable": true,
+      "defaultValue": "dynatrace.cross.charge"
+    },
+    {
+      "key": "Portfolio",
+      "visible": true,
+      "type": "query",
+      "version": 1,
+      "editable": true,
+      "input": "// Set \"All\" option\ndata json:\"\"\"[\n{\"distinct_itens\": \"All\"}\n]\"\"\"\n| append [\n  fetch bizevents\n| filter  contains(event.provider, $Event_Provider)\n| fieldsAdd tempvar = if(isNotNull(Portfolio), Portfolio, else: \"No Portfolio\")\n| summarize distinct_itens = collectDistinct(tempvar)\n| expand distinct_itens\n| sort distinct_itens\n]\n",
+      "multiple": false
+    },
+    {
+      "key": "AppName",
+      "visible": true,
+      "type": "query",
+      "version": 1,
+      "editable": true,
+      "input": "// Set \"All\" option\ndata json:\"\"\"[\n{\"distinct_itens\": \"All\"}\n]\"\"\"\n| append [\n  fetch bizevents\n| filter  contains(event.provider, $Event_Provider)\n| fieldsAdd tempvar = if(isNotNull(AppName), AppName, else: \"No AppName\")\n| summarize distinct_itens = collectDistinct(tempvar)\n| expand distinct_itens\n| sort distinct_itens\n]\n",
+      "multiple": false,
+      "defaultValue": "All"
+    },
+    {
+      "key": "Hostname",
+      "visible": true,
+      "type": "text",
+      "version": 1,
+      "editable": true
+    }
+  ],
+  "tiles": {
+    "1": {
+      "title": "",
+      "type": "data",
+      "query": "fetch bizevents\n| filter  contains(event.provider, $Event_Provider)\n| filter if(not in(\"All\", $Tenant), in(tenant, $Tenant), else:true)\n| filter if(not matchesPhrase($CostCenter, \"All\"), if( matchesPhrase($CostCenter, \"No CostCenter\"), isNull(CostCenter), else:matchesPhrase(CostCenter,$CostCenter)), else:true)\n| filter if(not matchesPhrase($AppName, \"All\"), if( matchesPhrase($AppName, \"No AppName\"), isNull(AppName), else:matchesPhrase(AppName,$AppName)), else:true)\n| filter if(not matchesPhrase($Portfolio, \"All\"), if( matchesPhrase($Portfolio, \"No Portfolio\"), isNull(Portfolio), else:matchesPhrase(Portfolio,$Portfolio)), else:true)\n| filter if(not in(\"All\", $Module), in(module, $Module), else:true)\n| filter if(not in($Hostname, \"All\",\"\"), matchesValue(billedEntityName, $Hostname), else:true)\n| dedup {formatTimestamp(timestamp, format:\"MM-dd-yyyy\"), billedEntityId, module }, sort: { timestamp desc }\n| summarize cost = sum(cost), by:{module}\n| sort cost desc",
+      "visualization": "donutChart",
+      "visualizationSettings": {
+        "thresholds": [],
+        "chartSettings": {
+          "xAxisScaling": "analyzedTimeframe",
+          "gapPolicy": "connect",
+          "circleChartSettings": {
+            "groupingThresholdType": "relative",
+            "groupingThresholdValue": 0,
+            "valueType": "relative",
+            "showTotalValue": true
+          },
+          "categoryOverrides": {},
+          "categoricalBarChartSettings": {
+            "categoryAxis": ["module"],
+            "categoryAxisLabel": "module",
+            "valueAxis": ["cost"],
+            "valueAxisLabel": "cost",
+            "tooltipVariant": "single"
+          },
+          "truncationMode": "middle",
+          "legend": {
+            "position": "right",
+            "hidden": false
+          }
+        },
+        "singleValue": {
+          "showLabel": true,
+          "label": "module",
+          "prefixIcon": "",
+          "recordField": "module",
+          "autoscale": true,
+          "alignment": "center",
+          "colorThresholdTarget": "value",
+          "trend": {
+            "trendType": "auto",
+            "isVisible": false
+          },
+          "sparklineSettings": {}
+        },
+        "table": {
+          "rowDensity": "condensed",
+          "enableSparklines": false,
+          "hiddenColumns": [],
+          "lineWrapIds": [],
+          "columnWidths": {},
+          "columnTypeOverrides": []
+        },
+        "honeycomb": {
+          "shape": "hexagon",
+          "legend": "auto",
+          "dataMappings": {
+            "value": "cost"
+          },
+          "displayedFields": ["module"],
+          "colorMode": "color-palette",
+          "colorPalette": "blue"
+        },
+        "histogram": {
+          "dataMappings": [
+            {
+              "valueAxis": "cost",
+              "rangeAxis": ""
+            }
+          ],
+          "variant": "single",
+          "displayedFields": ["module"]
+        },
+        "valueBoundaries": {
+          "min": "auto",
+          "max": "auto"
+        },
+        "label": {
+          "showLabel": false,
+          "label": "cost"
+        },
+        "icon": {
+          "showIcon": false,
+          "icon": ""
+        },
+        "unitsOverrides": [
+          {
+            "identifier": "cost",
+            "unitCategory": "unspecified",
+            "baseUnit": "none",
+            "displayUnit": null,
+            "decimals": 2,
+            "suffix": "",
+            "delimiter": false,
+            "added": 1727099451509
+          }
+        ],
+        "dataMapping": {
+          "value": "cost"
+        }
+      },
+      "querySettings": {
+        "maxResultRecords": 1000,
+        "defaultScanLimitGbytes": 500,
+        "maxResultMegaBytes": 100,
+        "defaultSamplingRatio": 10,
+        "enableSampling": false
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
+    },
+    "5": {
+      "title": "",
+      "type": "data",
+      "query": "fetch bizevents\n| filter  contains(event.provider, $Event_Provider)\n| filter if(not in(\"All\", $Tenant), in(tenant, $Tenant), else:true)\n| filter if(not matchesPhrase($CostCenter, \"All\"), if( matchesPhrase($CostCenter, \"No CostCenter\"), isNull(CostCenter), else:matchesPhrase(CostCenter,$CostCenter)), else:true)\n| filter if(not matchesPhrase($AppName, \"All\"), if( matchesPhrase($AppName, \"No AppName\"), isNull(AppName), else:matchesPhrase(AppName,$AppName)), else:true)\n| filter if(not matchesPhrase($Portfolio, \"All\"), if( matchesPhrase($Portfolio, \"No Portfolio\"), isNull(Portfolio), else:matchesPhrase(Portfolio,$Portfolio)), else:true)\n| filter if(not in(\"All\", $Module), in(module, $Module), else:true)\n| filter if(not in($Hostname, \"All\",\"\"), matchesValue(billedEntityName, $Hostname), else:true)\n| dedup {formatTimestamp(timestamp, format:\"MM-dd-yyyy\"), billedEntityId, module }, sort: { timestamp desc }\n| Fields billedTime = toTimestamp(UTCBilleddate), cost, module, UTCBilleddate\n| makeTimeseries Cost = sum(cost), by:{module}, time: toTimestamp(billedTime), interval: 1d\n",
+      "visualization": "barChart",
+      "visualizationSettings": {
+        "thresholds": [],
+        "chartSettings": {
+          "xAxisScaling": "analyzedTimeframe",
+          "gapPolicy": "connect",
+          "circleChartSettings": {
+            "groupingThresholdType": "relative",
+            "groupingThresholdValue": 0,
+            "valueType": "relative",
+            "showTotalValue": true
+          },
+          "categoryOverrides": {},
+          "categoricalBarChartSettings": {
+            "categoryAxisLabel": "module",
+            "valueAxisLabel": "interval",
+            "tooltipVariant": "single"
+          },
+          "truncationMode": "middle",
+          "hiddenLegendFields": ["interval"],
+          "curve": "linear",
+          "legend": {
+            "position": "right",
+            "hidden": false
+          },
+          "seriesOverrides": [],
+          "xAxisIsLabelVisible": false,
+          "valueRepresentation": "absolute",
+          "xAxisLabel": "timeframe",
+          "leftYAxisSettings": {},
+          "fieldMapping": {
+            "timestamp": "timeframe",
+            "leftAxisValues": ["Cost"]
+          }
+        },
+        "singleValue": {
+          "showLabel": true,
+          "label": "module",
+          "prefixIcon": "",
+          "recordField": "module",
+          "autoscale": true,
+          "alignment": "center",
+          "colorThresholdTarget": "value",
+          "trend": {
+            "trendType": "auto",
+            "isVisible": true
+          },
+          "sparklineSettings": {
+            "record": "Cost"
+          }
+        },
+        "table": {
+          "rowDensity": "condensed",
+          "enableSparklines": false,
+          "hiddenColumns": [],
+          "lineWrapIds": [],
+          "columnWidths": {},
+          "columnTypeOverrides": [
+            {
+              "fields": ["Cost"],
+              "value": "sparkline",
+              "id": 1744995162638
+            }
+          ]
+        },
+        "honeycomb": {
+          "shape": "hexagon",
+          "legend": "auto",
+          "dataMappings": {
+            "value": "module"
+          },
+          "displayedFields": ["module"],
+          "colorMode": "color-palette",
+          "colorPalette": "categorical"
+        },
+        "histogram": {
+          "dataMappings": [
+            {
+              "valueAxis": "interval",
+              "rangeAxis": ""
+            }
+          ],
+          "variant": "single",
+          "displayedFields": ["module"]
+        },
+        "valueBoundaries": {
+          "min": "auto",
+          "max": "auto"
+        },
+        "label": {
+          "showLabel": false,
+          "label": "interval"
+        },
+        "icon": {
+          "showIcon": false,
+          "icon": ""
+        },
+        "unitsOverrides": [
+          {
+            "identifier": "Cost",
+            "unitCategory": "unspecified",
+            "baseUnit": "none",
+            "displayUnit": null,
+            "decimals": 2,
+            "suffix": "",
+            "delimiter": false,
+            "added": 1727099361475
+          }
+        ],
+        "dataMapping": {
+          "value": "interval"
+        }
+      },
+      "querySettings": {
+        "maxResultRecords": 1000,
+        "defaultScanLimitGbytes": 500,
+        "maxResultMegaBytes": 100,
+        "defaultSamplingRatio": 10,
+        "enableSampling": false
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
+    },
+    "11": {
+      "title": "Hosts Cost - TOP 1000",
+      "type": "data",
+      "query": "fetch bizevents\n| filter  contains(event.provider, $Event_Provider)\n| filter if(not in(\"All\", $Tenant), in(tenant, $Tenant), else:true)\n| filter if(not matchesPhrase($CostCenter, \"All\"), if( matchesPhrase($CostCenter, \"No CostCenter\"), isNull(CostCenter), else:matchesPhrase(CostCenter,$CostCenter)), else:true)\n| filter if(not matchesPhrase($AppName, \"All\"), if( matchesPhrase($AppName, \"No AppName\"), isNull(AppName), else:matchesPhrase(AppName,$AppName)), else:true)\n| filter if(not matchesPhrase($Portfolio, \"All\"), if( matchesPhrase($Portfolio, \"No Portfolio\"), isNull(Portfolio), else:matchesPhrase(Portfolio,$Portfolio)), else:true)\n| filter if(not in(\"All\", $Module), in(module, $Module), else:true)\n| filter if(not in($Hostname, \"All\",\"\"), matchesValue(billedEntityName, $Hostname), else:true)\n| dedup {formatTimestamp(timestamp, format:\"MM-dd-yyyy\"), billedEntityId, module }, sort: { timestamp desc }\n| summarize `Server Cost` = sum(cost), by:{`Tenant` = tenant,`Module` = module, `Host ID` = billedEntityId, `Host Name` = billedEntityName,`Cost Center` = CostCenter,`AppName` = AppName,`Portfolio` = Portfolio}\n| sort `Server Cost` desc\n| limit 1000\n\n\n",
+      "visualization": "table",
+      "visualizationSettings": {
+        "thresholds": [],
+        "chartSettings": {
+          "xAxisScaling": "analyzedTimeframe",
+          "gapPolicy": "gap",
+          "circleChartSettings": {
+            "groupingThresholdType": "relative",
+            "groupingThresholdValue": 0,
+            "valueType": "relative"
+          },
+          "categoryOverrides": {},
+          "curve": "linear",
+          "pointsDisplay": "auto",
+          "categoricalBarChartSettings": {
+            "layout": "horizontal",
+            "categoryAxisTickLayout": "horizontal",
+            "scale": "absolute",
+            "groupMode": "stacked",
+            "colorPaletteMode": "multi-color",
+            "categoryAxisLabel": "Module,Host ID,Host Name,Cost Center",
+            "valueAxisLabel": "Server Cost",
+            "tooltipVariant": "single"
+          },
+          "colorPalette": "categorical",
+          "valueRepresentation": "absolute",
+          "truncationMode": "middle"
+        },
+        "singleValue": {
+          "showLabel": true,
+          "label": "Modulo",
+          "prefixIcon": "",
+          "recordField": "Modulo",
+          "autoscale": true,
+          "alignment": "center",
+          "trend": {
+            "trendType": "auto",
+            "isVisible": true
+          },
+          "colorThresholdTarget": "value",
+          "sparklineSettings": {}
+        },
+        "table": {
+          "rowDensity": "condensed",
+          "enableSparklines": false,
+          "hiddenColumns": [],
+          "linewrapEnabled": false,
+          "lineWrapIds": [],
+          "monospacedFontEnabled": false,
+          "monospacedFontColumns": [],
+          "columnWidths": {},
+          "columnTypeOverrides": [],
+          "sortBy": {
+            "columnId": "[\"Server Cost\"]",
+            "direction": "descending"
+          },
+          "columnOrder": [
+            "[\"Tenant\"]",
+            "[\"Module\"]",
+            "[\"Host ID\"]",
+            "[\"Host Name\"]",
+            "[\"Cost Center\"]",
+            "[\"AppName\"]",
+            "[\"Portfolio\"]",
+            "[\"Server Cost\"]"
+          ]
+        },
+        "honeycomb": {
+          "shape": "hexagon",
+          "legend": {
+            "hidden": false,
+            "position": "auto"
+          },
+          "displayedFields": ["Module", "Host ID", "Host Name", "Cost Center"],
+          "dataMappings": {
+            "value": "Server Cost"
+          },
+          "truncationMode": "middle",
+          "colorMode": "color-palette",
+          "colorPalette": "blue"
+        },
+        "histogram": {
+          "legend": "auto",
+          "yAxis": {
+            "label": "Frequency",
+            "scale": "linear"
+          },
+          "colorPalette": "categorical",
+          "dataMappings": [
+            {
+              "valueAxis": "Server Cost",
+              "rangeAxis": ""
+            }
+          ],
+          "variant": "single",
+          "truncationMode": "middle",
+          "displayedFields": ["Host ID", "Host Name"]
+        },
+        "valueBoundaries": {
+          "min": "auto",
+          "max": "auto"
+        },
+        "label": {
+          "showLabel": false,
+          "label": "Server Cost"
+        },
+        "icon": {
+          "showIcon": false,
+          "icon": ""
+        },
+        "autoSelectVisualization": false,
+        "unitsOverrides": [
+          {
+            "identifier": "Server Cost",
+            "unitCategory": "unspecified",
+            "baseUnit": "none",
+            "displayUnit": null,
+            "decimals": 4,
+            "suffix": "",
+            "delimiter": false,
+            "added": 1733168466738
+          }
+        ],
+        "dataMapping": {
+          "value": "Server Cost"
+        }
+      },
+      "querySettings": {
+        "maxResultRecords": 1000,
+        "defaultScanLimitGbytes": 500,
+        "maxResultMegaBytes": 1,
+        "defaultSamplingRatio": 10,
+        "enableSampling": false
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
+    },
+    "12": {
+      "title": "",
+      "type": "data",
+      "query": "fetch bizevents\n| filter  contains(event.provider, $Event_Provider)\n| filter if(not in(\"All\", $Tenant), in(tenant, $Tenant), else:true)\n| filter if(not matchesPhrase($CostCenter, \"All\"), if( matchesPhrase($CostCenter, \"No CostCenter\"), isNull(CostCenter), else:matchesPhrase(CostCenter,$CostCenter)), else:true)\n| filter if(not matchesPhrase($AppName, \"All\"), if( matchesPhrase($AppName, \"No AppName\"), isNull(AppName), else:matchesPhrase(AppName,$AppName)), else:true)\n| filter if(not matchesPhrase($Portfolio, \"All\"), if( matchesPhrase($Portfolio, \"No Portfolio\"), isNull(Portfolio), else:matchesPhrase(Portfolio,$Portfolio)), else:true)\n| filter if(not in(\"All\", $Module), in(module, $Module), else:true)\n| filter if(not in($Hostname, \"All\",\"\"), matchesValue(billedEntityName, $Hostname), else:true)\n| dedup {formatTimestamp(timestamp, format:\"MM-dd-yyyy\"), billedEntityId, module }, sort: { timestamp desc }\n| fieldsAdd module = if(isNotNull(module), module, else: \"No module\")\n| summarize cost = sum(cost), by:{module}\n| sort cost desc\n",
+      "visualization": "table",
+      "visualizationSettings": {
+        "thresholds": [],
+        "chartSettings": {
+          "xAxisScaling": "analyzedTimeframe",
+          "gapPolicy": "connect",
+          "circleChartSettings": {
+            "groupingThresholdType": "relative",
+            "groupingThresholdValue": 0,
+            "valueType": "relative",
+            "showTotalValue": true,
+            "hideLabels": false
+          },
+          "categoryOverrides": {},
+          "categoricalBarChartSettings": {
+            "categoryAxisLabel": "costcenter",
+            "valueAxisLabel": "cost",
+            "tooltipVariant": "single"
+          },
+          "truncationMode": "middle",
+          "legend": {
+            "position": "right",
+            "hidden": false
+          }
+        },
+        "singleValue": {
+          "showLabel": true,
+          "label": "module",
+          "prefixIcon": "",
+          "recordField": "module",
+          "autoscale": true,
+          "alignment": "center",
+          "colorThresholdTarget": "value",
+          "trend": {
+            "trendType": "auto",
+            "isVisible": false
+          },
+          "sparklineSettings": {}
+        },
+        "table": {
+          "rowDensity": "condensed",
+          "enableSparklines": false,
+          "hiddenColumns": [],
+          "lineWrapIds": [],
+          "columnWidths": {},
+          "columnTypeOverrides": [],
+          "sortBy": [
+            {
+              "columnId": "[\"module\"]",
+              "direction": "ascending"
+            }
+          ]
+        },
+        "honeycomb": {
+          "shape": "hexagon",
+          "legend": "auto",
+          "dataMappings": {
+            "value": "cost"
+          },
+          "displayedFields": ["costcenter"],
+          "colorMode": "color-palette",
+          "colorPalette": "blue"
+        },
+        "histogram": {
+          "dataMappings": [
+            {
+              "valueAxis": "cost",
+              "rangeAxis": ""
+            }
+          ],
+          "variant": "single",
+          "displayedFields": ["costcenter"]
+        },
+        "valueBoundaries": {
+          "min": "auto",
+          "max": "auto"
+        },
+        "label": {
+          "showLabel": false,
+          "label": "cost"
+        },
+        "icon": {
+          "showIcon": false,
+          "icon": ""
+        },
+        "unitsOverrides": [
+          {
+            "identifier": "cost",
+            "unitCategory": "unspecified",
+            "baseUnit": "none",
+            "displayUnit": null,
+            "decimals": 2,
+            "suffix": "",
+            "delimiter": false,
+            "added": 1726515909058
+          }
+        ],
+        "autoSelectVisualization": false,
+        "dataMapping": {
+          "value": "cost"
+        }
+      },
+      "querySettings": {
+        "maxResultRecords": 1000,
+        "defaultScanLimitGbytes": 500,
+        "maxResultMegaBytes": 100,
+        "defaultSamplingRatio": 10,
+        "enableSampling": false
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
+    },
+    "13": {
+      "type": "markdown",
+      "content": "# Cross Charge Reporting\n---"
+    },
+    "14": {
+      "title": "",
+      "type": "data",
+      "query": "fetch bizevents\n| filter if(not in(\"All\", $Tenant), in(tenant, $Tenant), else:true)\n| filter  contains(event.provider, $Event_Provider)\n| filter if(not matchesPhrase($CostCenter, \"All\"), if( matchesPhrase($CostCenter, \"No CostCenter\"), isNull(CostCenter), else:matchesPhrase(CostCenter,$CostCenter)), else:true)\n| filter if(not matchesPhrase($AppName, \"All\"), if( matchesPhrase($AppName, \"No AppName\"), isNull(AppName), else:matchesPhrase(AppName,$AppName)), else:true)\n| filter if(not matchesPhrase($Portfolio, \"All\"), if( matchesPhrase($Portfolio, \"No Portfolio\"), isNull(Portfolio), else:matchesPhrase(Portfolio,$Portfolio)), else:true)\n| filter if(not in(\"All\", $Module), in(module, $Module), else:true)\n| filter if(not in($Hostname, \"All\",\"\"), matchesValue(billedEntityName, $Hostname), else:true)\n| dedup {formatTimestamp(timestamp, format:\"MM-dd-yyyy\"), billedEntityId, module }, sort: { timestamp desc }\n| summarize cost = sum(cost), by:{Portfolio}\n| sort cost desc",
+      "visualization": "donutChart",
+      "visualizationSettings": {
+        "thresholds": [],
+        "chartSettings": {
+          "xAxisScaling": "analyzedTimeframe",
+          "gapPolicy": "connect",
+          "circleChartSettings": {
+            "groupingThresholdType": "relative",
+            "groupingThresholdValue": 0,
+            "valueType": "relative",
+            "showTotalValue": true
+          },
+          "categoryOverrides": {},
+          "categoricalBarChartSettings": {
+            "categoryAxis": ["Portfolio"],
+            "categoryAxisLabel": "Portfolio",
+            "valueAxis": ["cost"],
+            "valueAxisLabel": "cost",
+            "tooltipVariant": "single"
+          },
+          "truncationMode": "middle",
+          "legend": {
+            "position": "right",
+            "hidden": false
+          }
+        },
+        "singleValue": {
+          "showLabel": true,
+          "label": "module",
+          "prefixIcon": "",
+          "recordField": "module",
+          "autoscale": true,
+          "alignment": "center",
+          "colorThresholdTarget": "value",
+          "trend": {
+            "trendType": "auto",
+            "isVisible": false
+          },
+          "sparklineSettings": {}
+        },
+        "table": {
+          "rowDensity": "condensed",
+          "enableSparklines": false,
+          "hiddenColumns": [],
+          "lineWrapIds": [],
+          "columnWidths": {},
+          "columnTypeOverrides": []
+        },
+        "honeycomb": {
+          "shape": "hexagon",
+          "legend": "auto",
+          "dataMappings": {
+            "value": "cost"
+          },
+          "displayedFields": ["module"],
+          "colorMode": "color-palette",
+          "colorPalette": "blue"
+        },
+        "histogram": {
+          "dataMappings": [
+            {
+              "valueAxis": "cost",
+              "rangeAxis": ""
+            }
+          ],
+          "variant": "single",
+          "displayedFields": ["module"]
+        },
+        "valueBoundaries": {
+          "min": "auto",
+          "max": "auto"
+        },
+        "label": {
+          "showLabel": false,
+          "label": "cost"
+        },
+        "icon": {
+          "showIcon": false,
+          "icon": ""
+        },
+        "unitsOverrides": [
+          {
+            "identifier": "cost",
+            "unitCategory": "unspecified",
+            "baseUnit": "none",
+            "displayUnit": null,
+            "decimals": 2,
+            "suffix": "",
+            "delimiter": false,
+            "added": 1727099451509
+          }
+        ],
+        "dataMapping": {
+          "value": "cost"
+        }
+      },
+      "querySettings": {
+        "maxResultRecords": 1000,
+        "defaultScanLimitGbytes": 500,
+        "maxResultMegaBytes": 100,
+        "defaultSamplingRatio": 10,
+        "enableSampling": false
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
+    },
+    "15": {
+      "title": "",
+      "type": "data",
+      "query": "fetch bizevents\n| filter if(not in(\"All\", $Tenant), in(tenant, $Tenant), else:true)\n| filter  contains(event.provider, $Event_Provider)\n| filter if(not matchesPhrase($CostCenter, \"All\"), if( matchesPhrase($CostCenter, \"No CostCenter\"), isNull(CostCenter), else:matchesPhrase(CostCenter,$CostCenter)), else:true)\n| filter if(not matchesPhrase($AppName, \"All\"), if( matchesPhrase($AppName, \"No AppName\"), isNull(AppName), else:matchesPhrase(AppName,$AppName)), else:true)\n| filter if(not matchesPhrase($Portfolio, \"All\"), if( matchesPhrase($Portfolio, \"No Portfolio\"), isNull(Portfolio), else:matchesPhrase(Portfolio,$Portfolio)), else:true)\n| filter if(not in(\"All\", $Module), in(module, $Module), else:true)\n| filter if(not in($Hostname, \"All\",\"\"), matchesValue(billedEntityName, $Hostname), else:true)\n| dedup {formatTimestamp(timestamp, format:\"MM-dd-yyyy\"), billedEntityId, module }, sort: { timestamp desc }\n| Fields billedTime = toTimestamp(UTCBilleddate), cost, Portfolio, UTCBilleddate\n| makeTimeseries Cost = sum(cost), by:{Portfolio}, time: toTimestamp(billedTime), interval: 1d\n",
+      "visualization": "barChart",
+      "visualizationSettings": {
+        "thresholds": [],
+        "chartSettings": {
+          "xAxisScaling": "analyzedTimeframe",
+          "gapPolicy": "connect",
+          "circleChartSettings": {
+            "groupingThresholdType": "relative",
+            "groupingThresholdValue": 0,
+            "valueType": "relative",
+            "showTotalValue": true
+          },
+          "categoryOverrides": {},
+          "categoricalBarChartSettings": {
+            "categoryAxisLabel": "module",
+            "valueAxisLabel": "interval",
+            "tooltipVariant": "single"
+          },
+          "truncationMode": "middle",
+          "hiddenLegendFields": ["interval"],
+          "curve": "linear",
+          "legend": {
+            "position": "right",
+            "hidden": false
+          },
+          "seriesOverrides": [],
+          "xAxisIsLabelVisible": false,
+          "valueRepresentation": "absolute",
+          "xAxisLabel": "timeframe",
+          "leftYAxisSettings": {},
+          "fieldMapping": {
+            "timestamp": "timeframe",
+            "leftAxisValues": ["Cost"]
+          }
+        },
+        "singleValue": {
+          "showLabel": true,
+          "label": "module",
+          "prefixIcon": "",
+          "recordField": "module",
+          "autoscale": true,
+          "alignment": "center",
+          "colorThresholdTarget": "value",
+          "trend": {
+            "trendType": "auto",
+            "isVisible": true
+          },
+          "sparklineSettings": {
+            "record": "Cost"
+          }
+        },
+        "table": {
+          "rowDensity": "condensed",
+          "enableSparklines": false,
+          "hiddenColumns": [],
+          "lineWrapIds": [],
+          "columnWidths": {},
+          "columnTypeOverrides": [
+            {
+              "fields": ["Cost"],
+              "value": "sparkline",
+              "id": 1744995157751
+            }
+          ]
+        },
+        "honeycomb": {
+          "shape": "hexagon",
+          "legend": "auto",
+          "dataMappings": {
+            "value": "module"
+          },
+          "displayedFields": ["module"],
+          "colorMode": "color-palette",
+          "colorPalette": "categorical"
+        },
+        "histogram": {
+          "dataMappings": [
+            {
+              "valueAxis": "interval",
+              "rangeAxis": ""
+            }
+          ],
+          "variant": "single",
+          "displayedFields": ["module"]
+        },
+        "valueBoundaries": {
+          "min": "auto",
+          "max": "auto"
+        },
+        "label": {
+          "showLabel": false,
+          "label": "interval"
+        },
+        "icon": {
+          "showIcon": false,
+          "icon": ""
+        },
+        "unitsOverrides": [
+          {
+            "identifier": "Cost",
+            "unitCategory": "unspecified",
+            "baseUnit": "none",
+            "displayUnit": null,
+            "decimals": 2,
+            "suffix": "",
+            "delimiter": false,
+            "added": 1727099361475
+          }
+        ],
+        "dataMapping": {
+          "value": "interval"
+        }
+      },
+      "querySettings": {
+        "maxResultRecords": 1000,
+        "defaultScanLimitGbytes": 500,
+        "maxResultMegaBytes": 100,
+        "defaultSamplingRatio": 10,
+        "enableSampling": false
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
+    },
+    "16": {
+      "title": "",
+      "type": "data",
+      "query": "fetch bizevents\n| filter if(not in(\"All\", $Tenant), in(tenant, $Tenant), else:true)\n| filter  contains(event.provider, $Event_Provider)\n| filter if(not matchesPhrase($CostCenter, \"All\"), if( matchesPhrase($CostCenter, \"No CostCenter\"), isNull(CostCenter), else:matchesPhrase(CostCenter,$CostCenter)), else:true)\n| filter if(not matchesPhrase($AppName, \"All\"), if( matchesPhrase($AppName, \"No AppName\"), isNull(AppName), else:matchesPhrase(AppName,$AppName)), else:true)\n| filter if(not matchesPhrase($Portfolio, \"All\"), if( matchesPhrase($Portfolio, \"No Portfolio\"), isNull(Portfolio), else:matchesPhrase(Portfolio,$Portfolio)), else:true)\n| filter if(not in(\"All\", $Module), in(module, $Module), else:true)\n| filter if(not in($Hostname, \"All\",\"\"), matchesValue(billedEntityName, $Hostname), else:true)\n| dedup {formatTimestamp(timestamp, format:\"MM-dd-yyyy\"), billedEntityId, module }, sort: { timestamp desc }\n| fieldsAdd Portfolio = if(isNotNull(Portfolio), Portfolio, else: \"No Portfolio\")\n| summarize cost = sum(cost), by:{Portfolio}\n| sort cost desc\n",
+      "visualization": "table",
+      "visualizationSettings": {
+        "thresholds": [],
+        "chartSettings": {
+          "xAxisScaling": "analyzedTimeframe",
+          "gapPolicy": "connect",
+          "circleChartSettings": {
+            "groupingThresholdType": "relative",
+            "groupingThresholdValue": 0,
+            "valueType": "relative",
+            "showTotalValue": true,
+            "hideLabels": false
+          },
+          "categoryOverrides": {},
+          "categoricalBarChartSettings": {
+            "categoryAxisLabel": "costcenter",
+            "valueAxisLabel": "cost",
+            "tooltipVariant": "single"
+          },
+          "truncationMode": "middle",
+          "legend": {
+            "position": "right",
+            "hidden": false
+          }
+        },
+        "singleValue": {
+          "showLabel": true,
+          "label": "module",
+          "prefixIcon": "",
+          "recordField": "module",
+          "autoscale": true,
+          "alignment": "center",
+          "colorThresholdTarget": "value",
+          "trend": {
+            "trendType": "auto",
+            "isVisible": false
+          },
+          "sparklineSettings": {}
+        },
+        "table": {
+          "rowDensity": "condensed",
+          "enableSparklines": false,
+          "hiddenColumns": [],
+          "lineWrapIds": [],
+          "columnWidths": {},
+          "columnTypeOverrides": [],
+          "sortBy": [
+            {
+              "columnId": "[\"Portfolio\"]",
+              "direction": "ascending"
+            }
+          ]
+        },
+        "honeycomb": {
+          "shape": "hexagon",
+          "legend": "auto",
+          "dataMappings": {
+            "value": "cost"
+          },
+          "displayedFields": ["costcenter"],
+          "colorMode": "color-palette",
+          "colorPalette": "blue"
+        },
+        "histogram": {
+          "dataMappings": [
+            {
+              "valueAxis": "cost",
+              "rangeAxis": ""
+            }
+          ],
+          "variant": "single",
+          "displayedFields": ["costcenter"]
+        },
+        "valueBoundaries": {
+          "min": "auto",
+          "max": "auto"
+        },
+        "label": {
+          "showLabel": false,
+          "label": "cost"
+        },
+        "icon": {
+          "showIcon": false,
+          "icon": ""
+        },
+        "unitsOverrides": [
+          {
+            "identifier": "cost",
+            "unitCategory": "unspecified",
+            "baseUnit": "none",
+            "displayUnit": null,
+            "decimals": 2,
+            "suffix": "",
+            "delimiter": false,
+            "added": 1726515909058
+          }
+        ],
+        "autoSelectVisualization": false,
+        "dataMapping": {
+          "value": "cost"
+        }
+      },
+      "querySettings": {
+        "maxResultRecords": 1000,
+        "defaultScanLimitGbytes": 500,
+        "maxResultMegaBytes": 100,
+        "defaultSamplingRatio": 10,
+        "enableSampling": false
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
+    },
+    "20": {
+      "type": "markdown",
+      "content": "### Portfolio"
+    },
+    "22": {
+      "type": "markdown",
+      "content": " ### Breakdown by Module"
+    },
+    "31": {
+      "title": "",
+      "type": "data",
+      "query": "fetch bizevents\n| filter if(not in(\"All\", $Tenant), in(tenant, $Tenant), else:true)\n| filter  contains(event.provider, $Event_Provider)\n| filter if(not matchesPhrase($CostCenter, \"All\"), if( matchesPhrase($CostCenter, \"No CostCenter\"), isNull(CostCenter), else:matchesPhrase(CostCenter,$CostCenter)), else:true)\n| filter if(not matchesPhrase($AppName, \"All\"), if( matchesPhrase($AppName, \"No AppName\"), isNull(AppName), else:matchesPhrase(AppName,$AppName)), else:true)\n| filter if(not matchesPhrase($Portfolio, \"All\"), if( matchesPhrase($Portfolio, \"No Portfolio\"), isNull(Portfolio), else:matchesPhrase(Portfolio,$Portfolio)), else:true)\n| filter if(not in(\"All\", $Module), in(module, $Module), else:true)\n| filter if(not in($Hostname, \"All\",\"\"), matchesValue(billedEntityName, $Hostname), else:true)\n| dedup {formatTimestamp(timestamp, format:\"MM-dd-yyyy\"), billedEntityId, module }, sort: { timestamp desc }\n| summarize cost = sum(cost), by:{CostCenter}\n| sort cost desc",
+      "visualization": "donutChart",
+      "visualizationSettings": {
+        "thresholds": [],
+        "chartSettings": {
+          "xAxisScaling": "analyzedTimeframe",
+          "gapPolicy": "connect",
+          "circleChartSettings": {
+            "groupingThresholdType": "relative",
+            "groupingThresholdValue": 0,
+            "valueType": "relative",
+            "showTotalValue": true
+          },
+          "categoryOverrides": {},
+          "categoricalBarChartSettings": {
+            "categoryAxis": ["CostCenter"],
+            "categoryAxisLabel": "CostCenter",
+            "valueAxis": ["cost"],
+            "valueAxisLabel": "cost",
+            "tooltipVariant": "single"
+          },
+          "truncationMode": "middle",
+          "legend": {
+            "position": "right",
+            "hidden": false
+          }
+        },
+        "singleValue": {
+          "showLabel": true,
+          "label": "module",
+          "prefixIcon": "",
+          "recordField": "module",
+          "autoscale": true,
+          "alignment": "center",
+          "colorThresholdTarget": "value",
+          "trend": {
+            "trendType": "auto",
+            "isVisible": false
+          },
+          "sparklineSettings": {}
+        },
+        "table": {
+          "rowDensity": "condensed",
+          "enableSparklines": false,
+          "hiddenColumns": [],
+          "lineWrapIds": [],
+          "columnWidths": {},
+          "columnTypeOverrides": []
+        },
+        "honeycomb": {
+          "shape": "hexagon",
+          "legend": "auto",
+          "dataMappings": {
+            "value": "cost"
+          },
+          "displayedFields": ["module"],
+          "colorMode": "color-palette",
+          "colorPalette": "blue"
+        },
+        "histogram": {
+          "dataMappings": [
+            {
+              "valueAxis": "cost",
+              "rangeAxis": ""
+            }
+          ],
+          "variant": "single",
+          "displayedFields": ["module"]
+        },
+        "valueBoundaries": {
+          "min": "auto",
+          "max": "auto"
+        },
+        "label": {
+          "showLabel": false,
+          "label": "cost"
+        },
+        "icon": {
+          "showIcon": false,
+          "icon": ""
+        },
+        "unitsOverrides": [
+          {
+            "identifier": "cost",
+            "unitCategory": "unspecified",
+            "baseUnit": "none",
+            "displayUnit": null,
+            "decimals": 2,
+            "suffix": "",
+            "delimiter": false,
+            "added": 1727099451509
+          }
+        ],
+        "dataMapping": {
+          "value": "cost"
+        }
+      },
+      "querySettings": {
+        "maxResultRecords": 1000,
+        "defaultScanLimitGbytes": 500,
+        "maxResultMegaBytes": 100,
+        "defaultSamplingRatio": 10,
+        "enableSampling": false
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
+    },
+    "32": {
+      "title": "",
+      "type": "data",
+      "query": "fetch bizevents\n| filter if(not in(\"All\", $Tenant), in(tenant, $Tenant), else:true)\n| filter  contains(event.provider, $Event_Provider)\n| filter if(not matchesPhrase($CostCenter, \"All\"), if( matchesPhrase($CostCenter, \"No CostCenter\"), isNull(CostCenter), else:matchesPhrase(CostCenter,$CostCenter)), else:true)\n| filter if(not matchesPhrase($AppName, \"All\"), if( matchesPhrase($AppName, \"No AppName\"), isNull(AppName), else:matchesPhrase(AppName,$AppName)), else:true)\n| filter if(not matchesPhrase($Portfolio, \"All\"), if( matchesPhrase($Portfolio, \"No Portfolio\"), isNull(Portfolio), else:matchesPhrase(Portfolio,$Portfolio)), else:true)\n| filter if(not in(\"All\", $Module), in(module, $Module), else:true)\n| filter if(not in($Hostname, \"All\",\"\"), matchesValue(billedEntityName, $Hostname), else:true)\n| dedup {formatTimestamp(timestamp, format:\"MM-dd-yyyy\"), billedEntityId, module }, sort: { timestamp desc }\n| Fields billedTime = toTimestamp(UTCBilleddate), cost, CostCenter, UTCBilleddate\n| makeTimeseries Cost = sum(cost), by:{CostCenter}, time: toTimestamp(billedTime), interval: 1d\n",
+      "visualization": "barChart",
+      "visualizationSettings": {
+        "thresholds": [],
+        "chartSettings": {
+          "xAxisScaling": "analyzedTimeframe",
+          "gapPolicy": "connect",
+          "circleChartSettings": {
+            "groupingThresholdType": "relative",
+            "groupingThresholdValue": 0,
+            "valueType": "relative",
+            "showTotalValue": true
+          },
+          "categoryOverrides": {},
+          "categoricalBarChartSettings": {
+            "categoryAxisLabel": "module",
+            "valueAxisLabel": "interval",
+            "tooltipVariant": "single"
+          },
+          "truncationMode": "middle",
+          "hiddenLegendFields": ["interval"],
+          "curve": "linear",
+          "legend": {
+            "position": "right",
+            "hidden": false
+          },
+          "seriesOverrides": [],
+          "xAxisIsLabelVisible": false,
+          "valueRepresentation": "absolute",
+          "xAxisLabel": "timeframe",
+          "leftYAxisSettings": {},
+          "fieldMapping": {
+            "timestamp": "timeframe",
+            "leftAxisValues": ["Cost"]
+          }
+        },
+        "singleValue": {
+          "showLabel": true,
+          "label": "module",
+          "prefixIcon": "",
+          "recordField": "module",
+          "autoscale": true,
+          "alignment": "center",
+          "colorThresholdTarget": "value",
+          "trend": {
+            "trendType": "auto",
+            "isVisible": true
+          },
+          "sparklineSettings": {
+            "record": "Cost"
+          }
+        },
+        "table": {
+          "rowDensity": "condensed",
+          "enableSparklines": false,
+          "hiddenColumns": [],
+          "lineWrapIds": [],
+          "columnWidths": {},
+          "columnTypeOverrides": [
+            {
+              "fields": ["Cost"],
+              "value": "sparkline",
+              "id": 1744995159453
+            }
+          ]
+        },
+        "honeycomb": {
+          "shape": "hexagon",
+          "legend": "auto",
+          "dataMappings": {
+            "value": "module"
+          },
+          "displayedFields": ["module"],
+          "colorMode": "color-palette",
+          "colorPalette": "categorical"
+        },
+        "histogram": {
+          "dataMappings": [
+            {
+              "valueAxis": "interval",
+              "rangeAxis": ""
+            }
+          ],
+          "variant": "single",
+          "displayedFields": ["module"]
+        },
+        "valueBoundaries": {
+          "min": "auto",
+          "max": "auto"
+        },
+        "label": {
+          "showLabel": false,
+          "label": "interval"
+        },
+        "icon": {
+          "showIcon": false,
+          "icon": ""
+        },
+        "unitsOverrides": [
+          {
+            "identifier": "Cost",
+            "unitCategory": "unspecified",
+            "baseUnit": "none",
+            "displayUnit": null,
+            "decimals": 2,
+            "suffix": "",
+            "delimiter": false,
+            "added": 1727099361475
+          }
+        ],
+        "dataMapping": {
+          "value": "interval"
+        }
+      },
+      "querySettings": {
+        "maxResultRecords": 1000,
+        "defaultScanLimitGbytes": 500,
+        "maxResultMegaBytes": 100,
+        "defaultSamplingRatio": 10,
+        "enableSampling": false
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
+    },
+    "33": {
+      "title": "",
+      "type": "data",
+      "query": "fetch bizevents\n| filter if(not in(\"All\", $Tenant), in(tenant, $Tenant), else:true)\n| filter  contains(event.provider, $Event_Provider)\n| filter if(not matchesPhrase($CostCenter, \"All\"), if( matchesPhrase($CostCenter, \"No CostCenter\"), isNull(CostCenter), else:matchesPhrase(CostCenter,$CostCenter)), else:true)\n| filter if(not matchesPhrase($AppName, \"All\"), if( matchesPhrase($AppName, \"No AppName\"), isNull(AppName), else:matchesPhrase(AppName,$AppName)), else:true)\n| filter if(not matchesPhrase($Portfolio, \"All\"), if( matchesPhrase($Portfolio, \"No Portfolio\"), isNull(Portfolio), else:matchesPhrase(Portfolio,$Portfolio)), else:true)\n| filter if(not in(\"All\", $Module), in(module, $Module), else:true)\n| filter if(not in($Hostname, \"All\",\"\"), matchesValue(billedEntityName, $Hostname), else:true)\n| dedup {formatTimestamp(timestamp, format:\"MM-dd-yyyy\"), billedEntityId, module }, sort: { timestamp desc }\n| fieldsAdd CostCenter = if(isNotNull(CostCenter), CostCenter, else: \"No CostCenter\")\n| summarize cost = sum(cost), by:{CostCenter}\n| sort cost desc\n",
+      "visualization": "table",
+      "visualizationSettings": {
+        "thresholds": [],
+        "chartSettings": {
+          "xAxisScaling": "analyzedTimeframe",
+          "gapPolicy": "connect",
+          "circleChartSettings": {
+            "groupingThresholdType": "relative",
+            "groupingThresholdValue": 0,
+            "valueType": "relative",
+            "showTotalValue": true,
+            "hideLabels": false
+          },
+          "categoryOverrides": {},
+          "categoricalBarChartSettings": {
+            "categoryAxisLabel": "costcenter",
+            "valueAxisLabel": "cost",
+            "tooltipVariant": "single"
+          },
+          "truncationMode": "middle",
+          "legend": {
+            "position": "right",
+            "hidden": false
+          }
+        },
+        "singleValue": {
+          "showLabel": true,
+          "label": "module",
+          "prefixIcon": "",
+          "recordField": "module",
+          "autoscale": true,
+          "alignment": "center",
+          "colorThresholdTarget": "value",
+          "trend": {
+            "trendType": "auto",
+            "isVisible": false
+          },
+          "sparklineSettings": {}
+        },
+        "table": {
+          "rowDensity": "condensed",
+          "enableSparklines": false,
+          "hiddenColumns": [],
+          "lineWrapIds": [],
+          "columnWidths": {},
+          "columnTypeOverrides": [],
+          "sortBy": [
+            {
+              "columnId": "[\"CostCenter\"]",
+              "direction": "ascending"
+            }
+          ]
+        },
+        "honeycomb": {
+          "shape": "hexagon",
+          "legend": "auto",
+          "dataMappings": {
+            "value": "cost"
+          },
+          "displayedFields": ["costcenter"],
+          "colorMode": "color-palette",
+          "colorPalette": "blue"
+        },
+        "histogram": {
+          "dataMappings": [
+            {
+              "valueAxis": "cost",
+              "rangeAxis": ""
+            }
+          ],
+          "variant": "single",
+          "displayedFields": ["costcenter"]
+        },
+        "valueBoundaries": {
+          "min": "auto",
+          "max": "auto"
+        },
+        "label": {
+          "showLabel": false,
+          "label": "cost"
+        },
+        "icon": {
+          "showIcon": false,
+          "icon": ""
+        },
+        "unitsOverrides": [
+          {
+            "identifier": "cost",
+            "unitCategory": "unspecified",
+            "baseUnit": "none",
+            "displayUnit": null,
+            "decimals": 2,
+            "suffix": "",
+            "delimiter": false,
+            "added": 1726515909058
+          }
+        ],
+        "autoSelectVisualization": false,
+        "dataMapping": {
+          "value": "cost"
+        }
+      },
+      "querySettings": {
+        "maxResultRecords": 1000,
+        "defaultScanLimitGbytes": 500,
+        "maxResultMegaBytes": 100,
+        "defaultSamplingRatio": 10,
+        "enableSampling": false
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
+    },
+    "34": {
+      "type": "markdown",
+      "content": "### Cost Center"
+    },
+    "35": {
+      "title": "Total",
+      "type": "data",
+      "query": "fetch bizevents\n| filter if(not in(\"All\", $Tenant), in(tenant, $Tenant), else:true)\n| filter  contains(event.provider, $Event_Provider)\n| filter if(not matchesPhrase($CostCenter, \"All\"), if( matchesPhrase($CostCenter, \"No CostCenter\"), isNull(CostCenter), else:matchesPhrase(CostCenter,$CostCenter)), else:true)\n| filter if(not matchesPhrase($AppName, \"All\"), if( matchesPhrase($AppName, \"No AppName\"), isNull(AppName), else:matchesPhrase(AppName,$AppName)), else:true)\n| filter if(not matchesPhrase($Portfolio, \"All\"), if( matchesPhrase($Portfolio, \"No Portfolio\"), isNull(Portfolio), else:matchesPhrase(Portfolio,$Portfolio)), else:true)\n| filter if(not in(\"All\", $Module), in(module, $Module), else:true)\n| filter if(not in($Hostname, \"All\",\"\"), matchesValue(billedEntityName, $Hostname), else:true)\n| dedup {formatTimestamp(timestamp, format:\"MM-dd-yyyy\"), billedEntityId, module }, sort: { timestamp desc }\n| summarize cost = sum(cost)\n",
+      "visualization": "singleValue",
+      "visualizationSettings": {
+        "thresholds": [],
+        "chartSettings": {
+          "xAxisScaling": "analyzedTimeframe",
+          "gapPolicy": "connect",
+          "circleChartSettings": {
+            "groupingThresholdType": "relative",
+            "groupingThresholdValue": 0,
+            "valueType": "relative",
+            "showTotalValue": true,
+            "hideLabels": false
+          },
+          "categoryOverrides": {},
+          "categoricalBarChartSettings": {
+            "categoryAxisLabel": "cost",
+            "valueAxisLabel": "cost",
+            "tooltipVariant": "single"
+          },
+          "truncationMode": "middle",
+          "legend": {
+            "position": "right",
+            "hidden": false
+          }
+        },
+        "singleValue": {
+          "showLabel": false,
+          "label": "module",
+          "prefixIcon": "",
+          "recordField": "cost",
+          "autoscale": true,
+          "alignment": "center",
+          "colorThresholdTarget": "value",
+          "trend": {
+            "trendType": "auto",
+            "isVisible": false
+          },
+          "sparklineSettings": {},
+          "isIconVisible": false
+        },
+        "table": {
+          "rowDensity": "condensed",
+          "enableSparklines": false,
+          "hiddenColumns": [],
+          "lineWrapIds": [],
+          "columnWidths": {},
+          "columnTypeOverrides": []
+        },
+        "honeycomb": {
+          "shape": "hexagon",
+          "legend": "auto",
+          "dataMappings": {
+            "value": "cost"
+          },
+          "displayedFields": ["costcenter"],
+          "colorMode": "color-palette",
+          "colorPalette": "blue"
+        },
+        "histogram": {
+          "dataMappings": [
+            {
+              "valueAxis": "cost",
+              "rangeAxis": ""
+            }
+          ],
+          "variant": "single",
+          "displayedFields": ["costcenter"]
+        },
+        "valueBoundaries": {
+          "min": "auto",
+          "max": "auto"
+        },
+        "autoSelectVisualization": false,
+        "label": {
+          "showLabel": false,
+          "label": "cost"
+        },
+        "icon": {
+          "showIcon": false,
+          "icon": ""
+        },
+        "unitsOverrides": [
+          {
+            "identifier": "cost",
+            "unitCategory": "currency",
+            "baseUnit": "usd",
+            "displayUnit": null,
+            "decimals": 2,
+            "suffix": "",
+            "delimiter": false,
+            "added": 1726515909058
+          }
+        ],
+        "dataMapping": {
+          "value": "cost"
+        }
+      },
+      "querySettings": {
+        "maxResultRecords": 1000,
+        "defaultScanLimitGbytes": 500,
+        "maxResultMegaBytes": 100,
+        "defaultSamplingRatio": 10,
+        "enableSampling": false
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
+    },
+    "36": {
+      "type": "markdown",
+      "content": "### Host"
+    }
+  },
+  "layouts": {
+    "1": {
+      "x": 0,
+      "y": 3,
+      "w": 7,
+      "h": 4
+    },
+    "5": {
+      "x": 7,
+      "y": 3,
+      "w": 11,
+      "h": 4
+    },
+    "11": {
+      "x": 0,
+      "y": 18,
+      "w": 24,
+      "h": 7
+    },
+    "12": {
+      "x": 18,
+      "y": 3,
+      "w": 6,
+      "h": 4
+    },
+    "13": {
+      "x": 0,
+      "y": 0,
+      "w": 18,
+      "h": 2
+    },
+    "14": {
+      "x": 0,
+      "y": 13,
+      "w": 7,
+      "h": 4
+    },
+    "15": {
+      "x": 7,
+      "y": 13,
+      "w": 11,
+      "h": 4
+    },
+    "16": {
+      "x": 18,
+      "y": 13,
+      "w": 6,
+      "h": 4
+    },
+    "20": {
+      "x": 0,
+      "y": 12,
+      "w": 24,
+      "h": 1
+    },
+    "22": {
+      "x": 0,
+      "y": 2,
+      "w": 24,
+      "h": 1
+    },
+    "31": {
+      "x": 0,
+      "y": 8,
+      "w": 7,
+      "h": 4
+    },
+    "32": {
+      "x": 7,
+      "y": 8,
+      "w": 11,
+      "h": 4
+    },
+    "33": {
+      "x": 18,
+      "y": 8,
+      "w": 6,
+      "h": 4
+    },
+    "34": {
+      "x": 0,
+      "y": 7,
+      "w": 24,
+      "h": 1
+    },
+    "35": {
+      "x": 18,
+      "y": 0,
+      "w": 6,
+      "h": 2
+    },
+    "36": {
+      "x": 0,
+      "y": 17,
+      "w": 24,
+      "h": 1
+    }
+  },
+  "importedWithCode": false,
+  "settings": {
+    "defaultTimeframe": {
+      "value": {
+        "from": "now()-7d",
+        "to": "now()"
+      },
+      "enabled": true
+    }
+  }
+}

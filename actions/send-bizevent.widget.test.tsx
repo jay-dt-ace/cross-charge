@@ -1,0 +1,42 @@
+import { render } from '@dynatrace/strato-components-preview-testing/jest';
+import { type IntentPayload } from '@dynatrace-sdk/navigation';
+import { mockNavigation } from '@dynatrace-sdk/navigation/testing';
+import fetchMock, { enableFetchMocks } from 'jest-fetch-mock';
+import React from 'react';
+import SendBizeventWidget from './send-bizevent.widget';
+
+enableFetchMocks();
+
+describe('SendBizeventWidget', () => {
+  beforeEach(() => {
+    fetchMock.resetMocks();
+
+    // Mock the `getIntentLink` value to be a valid URL.
+    mockNavigation({
+      getIntentLink: (_intentPayload: IntentPayload, _appId?: string, _intentId?: string) => 'https://mock.url',
+    });
+  });
+
+  it('should render a widget with values', () => {
+    // Mock settings objects response value.
+    fetchMock.mockIf(
+      new RegExp('/platform/app-settings/v1/objects'),
+      JSON.stringify({
+        items: [
+          {
+            objectId: 'send-bizevent-connection-object-id',
+            summary: 'My Connection',
+          },
+        ],
+        totalCount: 1,
+        pageSize: 100,
+      }),
+    );
+    render(
+      <SendBizeventWidget
+        value={{ connectionId: 'send-bizevent-connection-object-id', localIngest: true }}
+        onValueChanged={jest.fn()}
+      />,
+    );
+  });
+});

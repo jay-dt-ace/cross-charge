@@ -1,0 +1,109 @@
+{
+  "$schema": "https://developer.dynatrace.com/docs-assets/schema_strict_apps.json",
+  "dynatrace": "1",
+  "schemaId": "get-rate-card-connection",
+  "version": "0.1.0",
+  "summaryPattern": "{rate_card_type} {client_id}",
+  "displayName": "Cross Charge: Get Rate Card & Tags",
+  "description": "For the Cross Charge Workflow, gather information about Rate Cards and Tag Keys",
+  "multiObject": true,
+  "maxObjects": 1,
+  "ordered": false,
+  "enums": {
+    "rate_card_type": {
+      "type": "enum",
+      "displayName": "Rate Card Type",
+      "items": [
+        {
+          "displayName": "Account Rate Card",
+          "value": "account",
+          "description": "Use your Accounts Rate Card"
+        },
+        {
+          "displayName": "Default Rate Card",
+          "value": "default",
+          "description": "Use Dynatrace's Default Rate Card - https://www.dynatrace.com/pricing/rate-card/"
+        }
+      ]
+    }
+  },
+  "types": {
+    "tag_and_alias": {
+      "type": "object",
+      "summaryPattern": "{tag_key} aliased to {tag_alias}",
+      "displayName": "Tag And Alias",
+      "properties": {
+        "tag_key": {
+          "displayName": "Tag Key",
+          "type": "text",
+          "default": ""
+        },
+        "tag_alias": {
+          "displayName": "Tag Key Alias",
+          "description": "(Optional) - Can be used to normalize different tag keys that are logically similar but technically different. \n For Example `Org` & `Organization` can be aliased to a single value.",
+          "type": "text",
+          "nullable": true
+        }
+      }
+    }
+  },
+  "properties": {
+    "rate_card_type": {
+      "displayName": "Select Rate Card",
+      "type": {
+        "$ref": "#/enums/rate_card_type"
+      },
+      "default": "account"
+    },
+    "client_id": {
+      "displayName": "OAuth2 Client ID",
+      "type": "text",
+      "default": "",
+      "description": "Requires the `account-uac-read` scope.",
+      "precondition": {
+        "type": "EQUALS",
+        "property": "rate_card_type",
+        "expectedValue": "account"
+      }
+    },
+    "client_secret": {
+      "displayName": "OAuth2 Client Secret",
+      "type": "secret",
+      "default": "",
+      "precondition": {
+        "type": "EQUALS",
+        "property": "rate_card_type",
+        "expectedValue": "account"
+      }
+    },
+    "account_id": {
+      "displayName": "OAuth2 Account ID",
+      "type": "text",
+      "default": "",
+      "precondition": {
+        "type": "EQUALS",
+        "property": "rate_card_type",
+        "expectedValue": "account"
+      }
+    },
+    "tag_keys": {
+      "displayName": "List of Tag Keys",
+      "type": "list",
+      "items": {
+        "type": {
+          "$ref": "#/types/tag_and_alias"
+        }
+      },
+      "minObjects": 1,
+      "maxObjects": 50
+    }
+  },
+  "constraints": [
+    {
+      "type": "SECRET_RESUBMISSION",
+      "customMessage": "For security reasons please re-enter token/password to save the new configuration.",
+      "checkAllProperties": false
+    }
+  ],
+  "schemaConstraints": []
+}

@@ -1,0 +1,91 @@
+{
+  "$schema": "./.dt-app/app.config.schema.json",
+  "environmentUrl": "https://playground.apps.dynatrace.com",
+  "app": {
+    "name": "Cross Charge",
+    "version": "0.0.0",
+    "description": "Provides workflow actions for identifying DPS cost per entity/tag",
+    "id": "dynatrace.cross.charge",
+    "scopes": [
+      {
+        "name": "app-engine:functions:run",
+        "comment": "Run functions in the analytics workflow"
+      },
+      { "name": "app-engine:apps:run", "comment": "Run functions" },
+      { "name": "app-settings:objects:read", "comment": "Read app settings" },
+      {
+        "name": "automation:workflows:read",
+        "comment": "Needed to read the Workflows to find ingested workflow"
+      },
+      { "name": "environment-api:metrics:read", "comment": "To read metrics" },
+      {
+        "name": "environment-api:entities:read",
+        "comment": "Get entity tags"
+      },
+      {
+        "name": "settings:objects:read",
+        "comment": "To get generic entity types"
+      },
+      {
+        "name": "storage:entities:read",
+        "comment": "allows to query entities from Grail"
+      },
+      {
+        "name": "storage:events:write",
+        "comment": "Allows for local ingestion of bizevents"
+      },
+      {
+        "name": "storage:buckets:read",
+        "comment": "Allows the user to query records from Grail buckets"
+      },
+      {
+        "name": "storage:bizevents:read",
+        "comment": "Allows the user to query records from the bizevents table"
+      }
+    ],
+    "actions": [
+      {
+        "name": "get-rate-card",
+        "title": "GetRateCard",
+        "description": "Gathers rate card data via Dynatrace accounts API. Requires Configuration."
+      },
+      {
+        "name": "get-metric-bucket-usage",
+        "title": "GetMetricBucketUsage",
+        "description": "Gathers % of included host metrics that were billed."
+      },
+      {
+        "name": "get-generic-entity-types",
+        "title": "GetGenericEntityTypes",
+        "description": "Gathers generic topology types in this environment."
+      },
+      {
+        "name": "get-entities",
+        "title": "GetEntities",
+        "description": "Gathers all the entity IDs of a specific entity type."
+      },
+      {
+        "name": "get-entity-information",
+        "title": "GetEntityInformation",
+        "description": "Gathers entity name and tags for specified entity ID."
+      },
+      {
+        "name": "get-billing-usage",
+        "title": "GetBillingUsage",
+        "description": "Gathers DPS billing usage for specific entity and creates bizevent."
+      },
+      {
+        "name": "send-bizevent",
+        "title": "SendBizevent",
+        "description": "Sends bizevent to configured Dynatrace tenant. Requires Configuration."
+      }
+    ],
+    "documents": {
+      "Cross-Charge-Reporting": {
+        "name": "Cross Charge Reporting",
+        "description": "Provides overview of Cross Charge data"
+      }
+    }
+  },
+  "plugins": ["@dynatrace-sdk/dt-app-plugin-client-app-settings-v2"]
+}

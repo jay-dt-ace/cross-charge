@@ -1,0 +1,85 @@
+{
+  "$schema": "https://developer.dynatrace.com/docs-assets/schema_strict_apps.json",
+  "dynatrace": "1",
+  "schemaId": "send-bizevent-connection",
+  "version": "0.0.1",
+  "summaryPattern": "{name}",
+  "displayName": "Cross Charge: Send Bizevents",
+  "description": "Send bizevents from the ACE Solutions Vault Cross Charge Workflow to remote tenants. Make sure to add the following domains to the 'allow list' for outbound communication as described [here](https://dt-url.net/allow-outbound-connections): 'sso.dynatrace', 'api.dynatrace', 'tenant.live.dynatrace'",
+  "multiObject": true,
+  "maxObjects": 100,
+  "ordered": false,
+  "properties": {
+    "name": {
+      "displayName": "Connection name",
+      "description": "The name of the connection",
+      "type": "text",
+      "nullable": false,
+      "forceSecretResubmission": false,
+      "constraints": [
+        {
+          "type": "LENGTH",
+          "customMessage": "Name has to be between 1 and 50 characters long",
+          "maxLength": 50,
+          "minLength": 1
+        }
+      ],
+      "default": ""
+    },
+    "token": {
+      "displayName": "Token",
+      "description": "Dynatrace API token, requires the `bizevents.ingest` scope.",
+      "documentation": "https://docs.dynatrace.com/docs/shortlink/api-business-events-v2",
+      "type": "secret",
+      "nullable": false,
+      "constraints": [
+        {
+          "type": "LENGTH",
+          "customMessage": "Token has to be between 5 and 500 characters long",
+          "maxLength": 500,
+          "minLength": 5
+        }
+      ],
+      "default": ""
+    },
+    "url": {
+      "displayName": "URL",
+      "description": "Dynatrace URL - `https://{your-tenant-id}.live.dynatrace.com`",
+      "documentation": "https://dt-url.net/allow-outbound-connections",
+      "type": "text",
+      "subType": "url",
+      "nullable": false,
+      "default": "",
+      "constraints": [
+        {
+          "type": "LENGTH",
+          "customMessage": "Name has to be between 1 and 50 characters long",
+          "maxLength": 100,
+          "minLength": 1
+        },
+        {
+          "type": "PATTERN",
+          "customMessage": "The URL must be secure (https://) and must not contain a trailing slash.",
+          "pattern": "^https://.*[^/]$"
+        }
+      ],
+      "forceSecretResubmission": true
+    }
+  },
+  "constraints": [
+    {
+      "type": "SECRET_RESUBMISSION",
+      "customMessage": "For security reasons please re-enter token/password to save the new configuration.",
+      "checkAllProperties": false
+    }
+  ],
+  "schemaConstraints": [
+    {
+      "type": "UNIQUE",
+      "customMessage": "A connection with the same name already exists. Please provide a different name.",
+      "uniqueProperties": [
+        "name"
+      ]
+    }
+  ]
+}

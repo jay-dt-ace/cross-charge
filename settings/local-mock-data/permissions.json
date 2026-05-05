@@ -1,0 +1,12 @@
+{
+	"<your schema id>": [
+		{
+			"permission": "app-settings:objects:read",
+			"granted": "condition"
+		},
+		{
+			"permission": "app-settings:objects:write",
+			"granted": "false"
+		}
+	]
+}

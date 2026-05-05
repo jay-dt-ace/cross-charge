@@ -1,0 +1,27 @@
+[
+  {
+    "schemaId": "get-rate-card-connection",
+    "summary": "Local Mock Connection",
+    "value": {
+      "rate_card_type": "default",
+      "client_id": "<Client-ID>",
+      "client_secret": "<Client-Secret>",
+      "account_id": "<Account-ID>",
+      "tag_keys": [
+        {
+          "tag_key": "Test-Tag",
+          "tag_alias": null
+        }
+      ]
+    }
+  },
+  {
+    "schemaId": "send-bizevent-connection",
+    "summary": "Local Mock Connection - Send BizEvents",
+    "value": {
+      "name": "<Name>",
+      "token": "<TOEKN>",
+      "url": "https://<YOUR-TENANT-ID>.live.dynatrace.com"
+    }
+  }
+]
