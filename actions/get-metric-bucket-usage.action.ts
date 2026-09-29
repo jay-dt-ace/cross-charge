@@ -7,9 +7,15 @@ import { isUndefined, isNull, isNaN } from "lodash-es";
 import { giveMeaningFullErrorMessage } from "../ui/app/utils/helpers";
 import yesterday from "../ui/shared/utils";
 
-// we won't get any payload bcoz, this widget doesn't have UI
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default async (_rawPayload: unknown) => {
+interface MetricBucketInput {
+  from_time?: string;
+  to_time?: string;
+}
+
+export default async (rawPayload: unknown) => {
+  const payload = (rawPayload && typeof rawPayload === "object")
+    ? rawPayload as MetricBucketInput
+    : {} as MetricBucketInput;
   const fullstackBilled =
     "builtin:billing.custom_metrics_classic.usage.fullstack_hosts:splitBy()";
   const fullstackUsage =
@@ -25,7 +31,10 @@ export default async (_rawPayload: unknown) => {
   const foundationUsage =
     "builtin:billing.foundation_and_discovery.metric_data_points.ingested:splitBy()";
 
-  const interval = yesterday();
+  const interval = (payload.from_time && payload.to_time)
+    ? { from_time: payload.from_time, to_time: payload.to_time }
+    : yesterday();
+  userLogger.info(`[get-metric-bucket-usage] Date range: ${interval.from_time} → ${interval.to_time}`);
 
   /**
    * FS -> FullStack, FD -> Foundation, I -> Infra
@@ -85,5 +94,7 @@ export default async (_rawPayload: unknown) => {
     FDPercent = 0;
   }
 
+  userLogger.info(`[get-metric-bucket-usage] Results — FS: ${FSPercent}, Infra: ${IPercent}, Foundation: ${FDPercent}`);
+  userLogger.info(`[get-metric-bucket-usage] Raw metrics: ${JSON.stringify(metricsToPoll)}`);
   return { FS_percent: FSPercent, I_percent: IPercent, FD_percent: FDPercent };
 };

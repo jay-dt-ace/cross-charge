@@ -13,6 +13,7 @@ interface GenericType {
 export default async (_rawPayload: unknown) => {
   const entityTypes: string[] = [];
 
+  userLogger.info(`[get-generic-entity-types] Fetching generic entity types from settings`);
   try {
     const data = await settingsObjectsClient.getSettingsObjects({
       schemaIds: "builtin:monitoredentities.generic.type",
@@ -26,9 +27,10 @@ export default async (_rawPayload: unknown) => {
         entityTypes.push(type.name);
       }
     }
+    userLogger.info(`[get-generic-entity-types] Found ${entityTypes.length} generic entity types: ${entityTypes.join(', ')}`);
   } catch (error: unknown) {
     const message = giveMeaningFullErrorMessage(error);
-    userLogger.error(message);
+    userLogger.error(`[get-generic-entity-types] Error: ${message}`);
     throw new UnsuccessfulActionError(`Failed to fetch settings: ${message}`);
   }
 

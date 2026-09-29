@@ -1,6 +1,6 @@
 import { type WorkflowCreate } from "@dynatrace-sdk/client-automation";
 
-export const appId = `dynatrace.cross.charge`;
+export const appId = `my.cross.charge`;
 
 export const actionGetEntities = appId + ":get-entities";
 export const actionGetEntityInfo = appId + ":get-entity-information";
@@ -16,9 +16,25 @@ export const sendBizEventDesc =
 export const billingUsageDesc =
   "Gathers DPS billing usage for specific entity and creates bizevent.";
 
+export const dateRef = '{{ result("get_date_range").from_time }}';
+export const toDateRef = '{{ result("get_date_range").to_time }}';
+
 export const workflow: WorkflowCreate = {
   title: "Cross Charge Workflow",
   tasks: {
+    get_date_range: {
+      name: "get_date_range",
+      action: appId + ":get-date-range",
+      description: "Sets the billing date range. Leave target_date blank for yesterday, or set YYYY-MM-DD to backfill.",
+      input: {
+        target_date: "",
+      },
+      position: {
+        x: 1,
+        y: 1,
+      },
+      predecessors: [],
+    },
     get_fs_hosts: {
       name: "get_fs_hosts",
       action: actionGetEntities,
@@ -38,6 +54,10 @@ export const workflow: WorkflowCreate = {
         states: {
           get_metric_bucket_usage: "OK",
         },
+      },
+      retry: {
+        count: 2,
+        delay: 30,
       },
     },
     get_rum_apps: {
@@ -60,6 +80,10 @@ export const workflow: WorkflowCreate = {
           get_metric_bucket_usage: "OK",
         },
       },
+      retry: {
+        count: 2,
+        delay: 30,
+      },
     },
     get_f_d_hosts: {
       name: "get_f_d_hosts",
@@ -80,6 +104,10 @@ export const workflow: WorkflowCreate = {
           get_metric_bucket_usage: "OK",
         },
       },
+      retry: {
+        count: 2,
+        delay: 30,
+      },
     },
     get_rate_card: {
       name: "get_rate_card",
@@ -94,6 +122,10 @@ export const workflow: WorkflowCreate = {
         y: 1,
       },
       predecessors: [],
+      retry: {
+        count: 2,
+        delay: 30,
+      },
     },
     get_serverless: {
       name: "get_serverless",
@@ -115,6 +147,10 @@ export const workflow: WorkflowCreate = {
           get_metric_bucket_usage: "OK",
         },
       },
+      retry: {
+        count: 2,
+        delay: 30,
+      },
     },
     get_infra_hosts: {
       name: "get_infra_hosts",
@@ -135,6 +171,10 @@ export const workflow: WorkflowCreate = {
         states: {
           get_metric_bucket_usage: "OK",
         },
+      },
+      retry: {
+        count: 2,
+        delay: 30,
       },
     },
     get_f_d_host_info: {
@@ -184,6 +224,10 @@ export const workflow: WorkflowCreate = {
           get_metric_bucket_usage: "OK",
         },
       },
+      retry: {
+        count: 2,
+        delay: 30,
+      },
     },
     get_k8s_namespaces: {
       name: "get_k8s_namespaces",
@@ -204,6 +248,10 @@ export const workflow: WorkflowCreate = {
           get_metric_bucket_usage: "OK",
         },
       },
+      retry: {
+        count: 2,
+        delay: 30,
+      },
     },
     get_mainframe_hosts: {
       name: "get_mainframe_hosts",
@@ -222,6 +270,10 @@ export const workflow: WorkflowCreate = {
         states: {
           get_metric_bucket_usage: "OK",
         },
+      },
+      retry: {
+        count: 2,
+        delay: 30,
       },
     },
     get_serverless_info: {
@@ -270,6 +322,10 @@ export const workflow: WorkflowCreate = {
         states: {
           get_metric_bucket_usage: "OK",
         },
+      },
+      retry: {
+        count: 2,
+        delay: 30,
       },
     },
     get_syn_browser_info: {
@@ -378,6 +434,11 @@ export const workflow: WorkflowCreate = {
       },
       withItems: 'bizevents in {{result("get_fs_host_billing_usage")}}',
       concurrency: 10,
+      retry: {
+        count: 2,
+        delay: 30,
+        failedLoopIterationsOnly: true,
+      },
       timeout: 1800,
     },
     get_fs_host_information: {
@@ -450,14 +511,19 @@ export const workflow: WorkflowCreate = {
       action: appId + ":get-metric-bucket-usage",
       description: "Gathers % of included host metrics that were billed.",
       active: true,
+      input: {
+        from_time: dateRef,
+        to_time: toDateRef,
+      },
       position: {
         x: 0,
         y: 2,
       },
-      predecessors: ["get_rate_card"],
+      predecessors: ["get_rate_card", "get_date_range"],
       conditions: {
         states: {
           get_rate_card: "OK",
+          get_date_range: "OK",
         },
       },
     },
@@ -538,6 +604,11 @@ export const workflow: WorkflowCreate = {
       },
       withItems: 'bizevents in {{ result("get_f_d_host_billing_usage") }}',
       concurrency: 10,
+      retry: {
+        count: 2,
+        delay: 30,
+        failedLoopIterationsOnly: true,
+      },
       timeout: 1800,
     },
     send_rum_apps_bizevents: {
@@ -561,6 +632,11 @@ export const workflow: WorkflowCreate = {
       },
       withItems: 'bizevents in {{ result("get_rum_app_billing_usage") }}',
       concurrency: 10,
+      retry: {
+        count: 2,
+        delay: 30,
+        failedLoopIterationsOnly: true,
+      },
       timeout: 1800,
     },
     get_syn_browser_monitors: {
@@ -583,6 +659,10 @@ export const workflow: WorkflowCreate = {
           get_metric_bucket_usage: "OK",
         },
       },
+      retry: {
+        count: 2,
+        delay: 30,
+      },
     },
     get_fs_host_billing_usage: {
       name: "get_fs_host_billing_usage",
@@ -595,6 +675,8 @@ export const workflow: WorkflowCreate = {
         entityType: '{{result("get_fs_hosts").entity_type}}',
         metricBucket: '{{ result("get_metric_bucket_usage").FS_percent }}',
         billingMetrics: '{{result("get_fs_hosts").billing_metrics}}',
+        from_time: dateRef,
+        to_time: toDateRef,
       },
       active: true,
       position: {
@@ -626,6 +708,8 @@ export const workflow: WorkflowCreate = {
         entityInfo: entityInfo,
         entityType: '{{ result("get_rum_apps").entity_type }}',
         billingMetrics: '{{ result("get_rum_apps").billing_metrics }}',
+        from_time: dateRef,
+        to_time: toDateRef,
       },
       position: {
         x: -1,
@@ -668,6 +752,11 @@ export const workflow: WorkflowCreate = {
       },
       withItems: 'bizevents in {{ result("get_infra_host_billing_usage") }}',
       concurrency: 10,
+      retry: {
+        count: 2,
+        delay: 30,
+        failedLoopIterationsOnly: true,
+      },
       timeout: 1800,
     },
     send_serverless_bizevents: {
@@ -691,6 +780,11 @@ export const workflow: WorkflowCreate = {
       },
       withItems: 'bizevents in {{ result("get_serverless_billing_usage") }}',
       concurrency: 10,
+      retry: {
+        count: 2,
+        delay: 30,
+        failedLoopIterationsOnly: true,
+      },
       timeout: 1800,
     },
     get_f_d_host_billing_usage: {
@@ -703,6 +797,8 @@ export const workflow: WorkflowCreate = {
         entityType: '{{ result("get_f_d_hosts").entity_type }}',
         metricBucket: '{{ result("get_metric_bucket_usage").FD_percent }}',
         billingMetrics: '{{ result("get_f_d_hosts").billing_metrics }}',
+        from_time: dateRef,
+        to_time: toDateRef,
       },
       position: {
         x: -4,
@@ -772,6 +868,10 @@ export const workflow: WorkflowCreate = {
           get_metric_bucket_usage: "OK",
         },
       },
+      retry: {
+        count: 2,
+        delay: 30,
+      },
     },
     send_syn_browser_bizevents: {
       name: "send_syn_browser_bizevents",
@@ -794,6 +894,11 @@ export const workflow: WorkflowCreate = {
       },
       withItems: 'bizevents in {{ result("get_syn_browser_billing_usage") }}',
       concurrency: 10,
+      retry: {
+        count: 2,
+        delay: 30,
+        failedLoopIterationsOnly: true,
+      },
       timeout: 1800,
     },
     get_infra_host_billing_usage: {
@@ -807,6 +912,8 @@ export const workflow: WorkflowCreate = {
         entityType: '{{ result("get_infra_hosts").entity_type }}',
         metricBucket: '{{ result("get_metric_bucket_usage").I_percent }}',
         billingMetrics: '{{result("get_infra_hosts").billing_metrics}}',
+        from_time: dateRef,
+        to_time: toDateRef,
       },
       active: true,
       position: {
@@ -837,6 +944,8 @@ export const workflow: WorkflowCreate = {
         entityInfo: entityInfo,
         entityType: '{{ result("get_serverless").entity_type }}',
         billingMetrics: '{{ result("get_serverless").billing_metrics }}',
+        from_time: dateRef,
+        to_time: toDateRef,
       },
       position: {
         x: 5,
@@ -878,6 +987,11 @@ export const workflow: WorkflowCreate = {
       },
       withItems: 'bizevents in {{ result("get_syn_3rd_party_billing_usage") }}',
       concurrency: 10,
+      retry: {
+        count: 2,
+        delay: 30,
+        failedLoopIterationsOnly: true,
+      },
       timeout: 1800,
     },
     get_syn_browser_billing_usage: {
@@ -890,6 +1004,8 @@ export const workflow: WorkflowCreate = {
         entityType: '{{ result("get_syn_browser_monitors").entity_type }}',
         billingMetrics:
           '{{ result("get_syn_browser_monitors").billing_metrics }}',
+        from_time: dateRef,
+        to_time: toDateRef,
       },
       position: {
         x: 1,
@@ -931,6 +1047,11 @@ export const workflow: WorkflowCreate = {
       },
       withItems: 'bizevents in {{ result("get_k8s_namespace_billing_usage") }}',
       concurrency: 10,
+      retry: {
+        count: 2,
+        delay: 30,
+        failedLoopIterationsOnly: true,
+      },
       timeout: 1800,
     },
     send_syn_http_check_bizevents: {
@@ -955,6 +1076,11 @@ export const workflow: WorkflowCreate = {
       withItems:
         'bizevents in {{ result("get_syn_http_check_billing_usage") }}',
       concurrency: 10,
+      retry: {
+        count: 2,
+        delay: 30,
+        failedLoopIterationsOnly: true,
+      },
       timeout: 1800,
     },
     get_mobile_custom_rum_app_info: {
@@ -1007,6 +1133,11 @@ export const workflow: WorkflowCreate = {
       withItems:
         'bizevents in {{ result("get_mainframe_host_billing_usage") }}',
       concurrency: 10,
+      retry: {
+        count: 2,
+        delay: 30,
+        failedLoopIterationsOnly: true,
+      },
       timeout: 1800,
     },
     get_k8s_namespace_billing_usage: {
@@ -1018,6 +1149,8 @@ export const workflow: WorkflowCreate = {
         entityInfo: entityInfo,
         entityType: '{{ result("get_k8s_namespaces").entity_type }}',
         billingMetrics: '{{ result("get_k8s_namespaces").billing_metrics }}',
+        from_time: dateRef,
+        to_time: toDateRef,
       },
       position: {
         x: 4,
@@ -1047,6 +1180,8 @@ export const workflow: WorkflowCreate = {
         entityInfo: entityInfo,
         entityType: '{{ result("get_syn_3rd_party").entity_type }}',
         billingMetrics: '{{ result("get_syn_3rd_party").billing_metrics }}',
+        from_time: dateRef,
+        to_time: toDateRef,
       },
       position: {
         x: 3,
@@ -1076,6 +1211,8 @@ export const workflow: WorkflowCreate = {
         entityInfo: entityInfo,
         entityType: '{{ result("get_mainframe_hosts").entity_type }}',
         billingMetrics: '{{ result("get_mainframe_hosts").billing_metrics }}',
+        from_time: dateRef,
+        to_time: toDateRef,
       },
       position: {
         x: -5,
@@ -1105,6 +1242,8 @@ export const workflow: WorkflowCreate = {
         entityInfo: entityInfo,
         entityType: '{{ result("get_syn_http_checks").entity_type }}',
         billingMetrics: '{{ result("get_syn_http_checks").billing_metrics }}',
+        from_time: dateRef,
+        to_time: toDateRef,
       },
       position: {
         x: 2,
@@ -1147,6 +1286,11 @@ export const workflow: WorkflowCreate = {
       withItems:
         'bizevents in {{ result("get_mobile_custom_rum_app_billing_usage") }}',
       concurrency: 10,
+      retry: {
+        count: 2,
+        delay: 30,
+        failedLoopIterationsOnly: true,
+      },
       timeout: 1800,
     },
     get_mobile_custom_rum_app_billing_usage: {
@@ -1159,6 +1303,8 @@ export const workflow: WorkflowCreate = {
         entityType: '{{ result("get_mobile_custom_rum_apps").entity_type }}',
         billingMetrics:
           '{{ result("get_mobile_custom_rum_apps").billing_metrics }}',
+        from_time: dateRef,
+        to_time: toDateRef,
       },
       position: {
         x: 0,

@@ -123,11 +123,11 @@ export default (rawPayload: unknown) => {
       );
     }
 
-    // if (!payload.tagKeys) {
-    //   throw new UnsuccessfulActionError("Input field 'tag keys' placeholder is missing.");
-    // }
+    userLogger.info(`[get-entity-information] Processing entity: ${payload.entity.id} (${payload.entity.name ?? 'unnamed'})`);
 
     const tags = compareTagKeys(payload.entity, payload.tagKeys);
+
+    userLogger.info(`[get-entity-information] Resolved tags: ${JSON.stringify(tags)}`);
 
     response = {
       entity_id: payload.entity.id,
@@ -136,7 +136,7 @@ export default (rawPayload: unknown) => {
     };
   } catch (error: unknown) {
     const message = giveMeaningFullErrorMessage(error);
-    userLogger.error(message);
+    userLogger.error(`[get-entity-information] Error: ${message}`);
     throw new UnsuccessfulActionError(
       `Failed to fetch entity info: ${message}`,
     );

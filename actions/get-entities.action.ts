@@ -134,6 +134,8 @@ export default async (rawPayload: unknown) => {
   }
 
   const fetchEntityDQL = buildDQL(rawPayload);
+  userLogger.info(`[get-entities] entityType: ${payload.entityType}, otherType: ${payload.otherType ?? 'n/a'}`);
+  userLogger.info(`[get-entities] DQL: ${fetchEntityDQL}`);
   try {
     // Reference with limits for each parameter:
     // https://bitbucket.lab.dynatrace.org/projects/APPFW/repos/dynatrace-sdk/browse/packages/client/query/resources/spec.yaml
@@ -165,9 +167,7 @@ export default async (rawPayload: unknown) => {
   }
 
   const entityType = findEntityType(rawPayload);
-  userLogger.warn(
-    `In total ${entities.length} entities of type ${entityType} were retrieved`,
-  );
+  userLogger.info(`[get-entities] Retrieved ${entities.length} entities of type: ${entityType}`);
 
   response = {
     billing_metrics: payload.billingMetrics.split(","),

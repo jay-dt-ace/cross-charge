@@ -33,7 +33,7 @@ export const giveSettingsLink = (connectionSchemaId: string) => {
 
 export const giveDocumentLink = (documentID: string) => {
   // Example URL
-  // https://{tenantId}.apps.dynatrace.com/ui/document/dynatrace.cross.charge.{documentID}
+  // https://{tenantId}.apps.dynatrace.com/ui/document/my.cross.charge.{documentID}
   return `${getEnvironmentUrl()}/ui/document/${APP_ID_BASE}.${documentID}`;
 };
 

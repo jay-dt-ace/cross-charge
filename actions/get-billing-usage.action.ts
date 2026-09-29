@@ -120,9 +120,9 @@ function buildBizEvent(
 
   const bizevent = {
     specversion: "1.0",
-    source: "dynatrace.cross.charge",
+    source: "my.cross.charge",
     id: crypto.randomUUID(),
-    type: "dynatrace.cross.charge",
+    type: "my.cross.charge",
     data: {},
   };
 
@@ -170,7 +170,10 @@ export default async (rawPayload: unknown) => {
   try {
     const entityType = payload.entityType;
 
-    const interval = yesterday();
+    const interval = (payload.from_time && payload.to_time)
+      ? { from_time: payload.from_time, to_time: payload.to_time }
+      : yesterday();
+    userLogger.info(`[get-billing-usage] Entity: ${payload.entityInfo.entity_id}, type: ${entityType}, date range: ${interval.from_time} → ${interval.to_time}`);
     if (Object.keys(payload.entityInfo.tags).length > 0) {
       for (const billingMetric of payload.billingMetrics) {
         const rateCard = metricToRateCard(
@@ -184,6 +187,7 @@ export default async (rawPayload: unknown) => {
           payload.entityInfo.entity_id,
         );
 
+        userLogger.info(`[get-billing-usage] Querying metric: ${billingMetric}`);
         const data = await metricsClient.query({
           acceptType: "application/json; charset=utf-8",
           metricSelector: billingMetricQuery,
@@ -191,8 +195,8 @@ export default async (rawPayload: unknown) => {
           from: interval.from_time,
           to: interval.to_time,
         });
-        //userLogger.info(JSON.stringify(data));
         const billedData = data.result[0].data[0]?.values[0];
+        userLogger.info(`[get-billing-usage] Metric ${billingMetric} billed value: ${billedData ?? 'null/undefined'}`);
         //userLogger.info(JSON.stringify(billedData));
         if (billedData > 0) {
           const bizevent = buildBizEvent(
@@ -207,11 +211,12 @@ export default async (rawPayload: unknown) => {
     }
   } catch (error: unknown) {
     const message = giveMeaningFullErrorMessage(error);
-    userLogger.error(message);
+    userLogger.error(`[get-billing-usage] Error: ${message}`);
     throw new UnsuccessfulActionError(
       `Failed to Fetch billing usage: ${message}`,
     );
   }
 
+  userLogger.info(`[get-billing-usage] Generated ${bizevents.length} bizevents for entity: ${payload.entityInfo.entity_id}`);
   return bizevents;
 };

@@ -1,7 +1,7 @@
 /**
  * App ID
  */
-export const APP_ID_BASE = 'dynatrace.cross.charge';
+export const APP_ID_BASE = 'my.cross.charge';
 
 /**
  * HUB ID
@@ -11,7 +11,7 @@ export const APP_ID_HUB = 'dynatrace.hub';
 /**
  * Settings App ID
  */
-export const SETTINGS_APP_ID = 'dynatrace.classic.settings';
+export const SETTINGS_APP_ID = 'dynatrace.settings.v2';
 
 /**
  * Settings Connection Id

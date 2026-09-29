@@ -33,6 +33,8 @@ export const getBillingUsageSchema = z.object({
   billingMetrics: z.array(z.string()).min(1),
   entityInfo: entityInfo,
   rateCard: rateCards,
+  from_time: z.string().optional(),
+  to_time: z.string().optional(),
 });
 
 export type GetBillingUsage = z.infer<typeof getBillingUsageSchema>;

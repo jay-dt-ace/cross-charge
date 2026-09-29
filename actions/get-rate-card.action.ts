@@ -2,6 +2,7 @@ import {
   UnsuccessfulActionError,
   userLogger,
 } from "@dynatrace-sdk/automation-action-utils/actions";
+import { getEnvironmentUrl } from "@dynatrace-sdk/app-environment";
 import { appSettingsObjectsClient } from "@dynatrace-sdk/client-app-settings-v2";
 import { defaultRateCard } from "../ui/documents/default-rate-card";
 import { getRateCardSchema } from "../ui/shared/types/get-ratecard";
@@ -46,10 +47,30 @@ export interface TagAlias {
   tag_alias?: string;
 }
 
-const SSO_URL = "https://sso.dynatrace.com/sso/oauth2/token";
+function getSsoUrl(): string {
+  const envUrl = getEnvironmentUrl();
+  if (envUrl.includes("sprint") && envUrl.includes("dynatracelabs.com")) {
+    return "https://sso-sprint.dynatracelabs.com/sso/oauth2/token";
+  }
+  if (envUrl.includes("dynatracelabs.com")) {
+    return "https://sso-dev.dynatracelabs.com/sso/oauth2/token";
+  }
+  return "https://sso.dynatrace.com/sso/oauth2/token";
+}
+
+function giveApiBaseUrl(): string {
+  const envUrl = getEnvironmentUrl();
+  if (envUrl.includes("sprint") && envUrl.includes("dynatracelabs.com")) {
+    return "https://api-hardening.internal.dynatracelabs.com";
+  }
+  if (envUrl.includes("dynatracelabs.com")) {
+    return "https://api-dev.dynatracelabs.com";
+  }
+  return "https://api.dynatrace.com";
+}
 
 function giveRateCardUrl(accoundId: string) {
-  return `https://api.dynatrace.com/sub/v1/accounts/${accoundId}/rate-cards`;
+  return `${giveApiBaseUrl()}/sub/v1/accounts/${accoundId}/rate-cards`;
 }
 
 /**
@@ -145,34 +166,29 @@ export async function getRateCardValuesWithToken(
 export function findValidRateCard(
   rateCardResponse: RateCardResponse[],
 ): RateCardResponse {
-  let validRateCard: RateCardResponse = {
+  const today = new Date().getTime();
+
+  const validCards = rateCardResponse.filter((rc) => {
+    const start = Date.parse(rc.startTime);
+    const end = Date.parse(rc.endTime);
+    return start <= today && today <= end;
+  });
+
+  if (validCards.length > 0) {
+    // Pick the active card with the most capabilities (the main contract, not an addendum)
+    return validCards.reduce((best, rc) =>
+      rc.capabilities.length > best.capabilities.length ? rc : best,
+    );
+  }
+
+  // defaults to the first rate card in the response if none match today's date
+  return rateCardResponse[0] ?? {
     quoteNumber: "",
     currencyCode: "",
     startTime: "",
     endTime: "",
     capabilities: [],
   };
-
-  let foundValidCard = false;
-  const today = new Date().getTime();
-
-  for (const rateCard of rateCardResponse) {
-    const start = Date.parse(rateCard.startTime);
-    const end = Date.parse(rateCard.endTime);
-
-    if (start <= today && today <= end) {
-      foundValidCard = true;
-      validRateCard = rateCard;
-    }
-  }
-
-  if (!foundValidCard && rateCardResponse.length > 0 && rateCardResponse[0]) {
-    // defaults to the first rate card in the response if the timeframe can't be validated
-    validRateCard = rateCardResponse[0];
-  }
-
-  // console.log(validRateCard);
-  return validRateCard;
 }
 
 export function reconfigureRateCardCapabilities(
@@ -253,7 +269,7 @@ export default async (rawPayload: unknown) => {
       // append the account_id with urn:dtaccount: , as authentication requires this
       const resource = `urn:dtaccount:${settings.account_id}`;
       const accessToken = await authenticate(
-        SSO_URL,
+        getSsoUrl(),
         settings.client_id,
         settings.client_secret,
         resource,
@@ -263,14 +279,15 @@ export default async (rawPayload: unknown) => {
 
       // gives the ratecard url
       const url = giveRateCardUrl(settings.account_id);
-      // console.warn(`Rate card url is ${url}`);
+      userLogger.info(`Rate card URL: ${url}`);
 
       // take the url and auth_acces_token and pass to ratecard url
       const accountRateCard = await getRateCardValuesWithToken(
         url,
         accessToken as string,
       );
-      userLogger.info(`Fetched Rate card for account: ${settings.account_id}`);
+      userLogger.info(`Fetched Rate card for account: ${settings.account_id}. Response count: ${accountRateCard.length}`);
+      userLogger.info(`Raw rate card response: ${JSON.stringify(accountRateCard)}`);
       rateCardResponse = accountRateCard;
     } catch (error: unknown) {
       const message =

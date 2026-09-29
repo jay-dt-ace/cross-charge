@@ -93,13 +93,16 @@ export default async (rawPayload: unknown) => {
       throw new UnsuccessfulActionError("Input field 'connectionId' is missing.");
     }
 
-    if (!payload.localIngest && payload.connectionId) {
-      // Retrieves the app settings object associated with the given objectId.
-      // Its values can be later used to, for example, communicate with third party services.
-      const connectionObject = await getConnectionObject(payload.connectionId);
+    const bizeventCount = Array.isArray(payload.bizeventRef) ? payload.bizeventRef.length : 0;
+    userLogger.info(`[send-bizevent] Processing ${bizeventCount} bizevents. localIngest: ${String(payload.localIngest)}`);
 
+    if (!payload.localIngest && payload.connectionId) {
+      const connectionObject = await getConnectionObject(payload.connectionId);
+      const remoteUrl = buildBizEventUrl(connectionObject.value?.url as string);
+      userLogger.info(`[send-bizevent] Sending to remote URL: ${remoteUrl}`);
       await sendBizEventsRemote(rawPayload, connectionObject);
     } else {
+      userLogger.info(`[send-bizevent] Ingesting locally to current tenant`);
       await sendBizEventsLocal(rawPayload);
     }
   } catch (error) {
