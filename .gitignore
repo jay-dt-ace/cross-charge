@@ -39,8 +39,11 @@ Thumbs.db
 /secrets.json
 /deploy/secrets.json
 
-# Deployment logs
-/deploy/*.log
+# Deployment scripts and config (kept local only)
+/deploy/
+/tenants.csv
+/tenants*.csv
+/workflow-template.json
 
 # app-settings plugin local files
 /settings/local-mock-data/secrets.json
