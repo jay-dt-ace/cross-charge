@@ -1,6 +1,6 @@
 {
   "$schema": "./.dt-app/app.config.schema.json",
-  "environmentUrl": "https://wmw59814.apps.dynatrace.com",
+  "environmentUrl": "https://qve61453.apps.dynatrace.com",
   "app": {
     "name": "Cross Charge",
     "version": "0.0.12",

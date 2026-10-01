@@ -120,9 +120,9 @@ function buildBizEvent(
 
   const bizevent = {
     specversion: "1.0",
-    source: "my.cross.charge",
+    source: "ace.vault.crosscharge",
     id: crypto.randomUUID(),
-    type: "my.cross.charge",
+    type: "ace.vault.crosscharge",
     data: {},
   };
 

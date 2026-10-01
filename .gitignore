@@ -35,6 +35,13 @@
 .DS_Store
 Thumbs.db
 
+# Deployment secrets
+/secrets.json
+/deploy/secrets.json
+
+# Deployment logs
+/deploy/*.log
+
 # app-settings plugin local files
 /settings/local-mock-data/secrets.json
 /settings/local-mock-data/persistence/
