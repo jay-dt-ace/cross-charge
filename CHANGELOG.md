@@ -6,6 +6,9 @@ All notable changes to this project since the fork from `dynatrace.cross.charge`
 
 ## [Unreleased]
 
+### Fixed
+- **Terminated host billing** — `get-entities` action now appends a time range clause (`from: "...", to: "..."`) to the DQL query when `from_time` and `to_time` are provided. Without this, `fetch dt.entity.*` only returns currently active entities, causing hosts that were terminated during the billing day to be silently excluded from cost calculations (`actions/get-entities.action.ts`, `ui/shared/types/get-entities.ts`)
+
 ### Changed
 - **Event type** — bizevent `source` and `type` changed from `my.cross.charge` to `ace.vault.crosscharge` for consistency with existing queries and dashboards (`actions/get-billing-usage.action.ts`)
 - **DQL query** — `event.provider` filter updated to `ace.vault.crosscharge` (`ui/app/constants/Queries.ts`)

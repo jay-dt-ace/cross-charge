@@ -46,7 +46,14 @@ function findEntityType(rawPayload: unknown) {
 
 function buildDQL(rawPayload: unknown) {
   const payload = getEntitiesSchema.parse(rawPayload);
-  let fetchEntityDQL = "fetch dt.entity.";
+
+  // Include time range so terminated hosts (alive during the billing day) are returned.
+  // Without from/to, DQL only returns currently active entities.
+  const timeClause = (payload.from_time && payload.to_time)
+    ? `, from: "${payload.from_time}", to: "${payload.to_time}"`
+    : "";
+
+  let fetchEntityDQL = `fetch dt.entity.`;
   let entityType = "";
   let monitoringMode = "";
   let osType = "";
@@ -89,7 +96,7 @@ function buildDQL(rawPayload: unknown) {
   // userLogger.info(entity_type);
   // userLogger.info(monitoring_mode);
 
-  fetchEntityDQL += entityType;
+  fetchEntityDQL += entityType + timeClause;
 
   if (monitoringMode !== "") {
     fetchEntityDQL += ' | filter monitoringMode == "' + monitoringMode + '" ';
