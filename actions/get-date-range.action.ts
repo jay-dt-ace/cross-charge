@@ -2,6 +2,8 @@ import { userLogger } from "@dynatrace-sdk/automation-action-utils/actions";
 import { getDateRangeSchema } from "../ui/shared/types/get-date-range";
 import yesterday from "../ui/shared/utils";
 
+const APP_VERSION = "0.0.16";
+
 function buildDayRange(dateStr: string): { from_time: string; to_time: string } {
   // Parse YYYY-MM-DD as UTC midnight to match the same convention as yesterday()
   const date = new Date(dateStr + "T00:00:00Z");
@@ -21,6 +23,8 @@ export default async (rawPayload: unknown) => {
   let from_time: string;
   let to_time: string;
   let target_date: string;
+
+  userLogger.info(`[get-date-range] App version: ${APP_VERSION}`);
 
   if (payload.target_date && payload.target_date.trim() !== "") {
     const range = buildDayRange(payload.target_date.trim());

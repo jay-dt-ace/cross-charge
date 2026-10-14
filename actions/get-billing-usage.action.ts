@@ -90,7 +90,7 @@ function buildBillingMetricKey(
       entityId +
       '~")")))))';
 
-    if (entityType === "custom_application") {
+    if (entityType === "custom_application" || entityType === "mobile_application") {
       metricFilter =
         ':filter(and(or(in("dt.entity.device_application",entitySelector("type(' +
         entityType +

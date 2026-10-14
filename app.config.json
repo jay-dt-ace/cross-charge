@@ -3,7 +3,7 @@
   "environmentUrl": "https://qve61453.apps.dynatrace.com",
   "app": {
     "name": "Cross Charge",
-    "version": "0.0.12",
+    "version": "0.0.16",
     "description": "Provides workflow actions for identifying DPS cost per entity/tag",
     "id": "my.cross.charge",
     "scopes": [
