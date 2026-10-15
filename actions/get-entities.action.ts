@@ -2,6 +2,7 @@ import {
   UnsuccessfulActionError,
   userLogger,
 } from "@dynatrace-sdk/automation-action-utils/actions";
+import { metricsClient } from "@dynatrace-sdk/client-classic-environment-v2";
 import { queryExecutionClient } from "@dynatrace-sdk/client-query";
 import { giveMeaningFullErrorMessage } from "../ui/app/utils/helpers";
 import { getEntitiesSchema } from "../ui/shared/types/get-entities";
@@ -140,30 +141,86 @@ export default async (rawPayload: unknown) => {
     );
   }
 
-  const fetchEntityDQL = buildDQL(rawPayload);
   userLogger.info(`[get-entities] entityType: ${payload.entityType}, otherType: ${payload.otherType ?? 'n/a'}`);
-  userLogger.info(`[get-entities] DQL: ${fetchEntityDQL}`);
-  try {
-    // Reference with limits for each parameter:
-    // https://bitbucket.lab.dynatrace.org/projects/APPFW/repos/dynatrace-sdk/browse/packages/client/query/resources/spec.yaml
-    const executeResponse = await queryExecutionClient.queryExecute({
-      body: {
-        query: fetchEntityDQL,
-        requestTimeoutMilliseconds: 60000,
-        maxResultRecords: 1000000,
-        maxResultBytes: 104857600,
-      },
-    });
 
-    if (executeResponse.result) {
-      for (const record of executeResponse.result.records) {
-        if (record?.name && record.id) {
-          const entityRecord: EntityInfoType = {
-            name: record.name as string,
-            id: record.id as string,
-            tags: record.tags ? (record.tags as string[]) : [],
-          };
-          entities.push(entityRecord);
+  try {
+    if (payload.entityType === "full_stack") {
+      // Metric-first approach: query billing metric to get accurate historical host list.
+      // DQL monitoringMode filter uses current state and misses terminated hosts;
+      // the billing metric is the source of truth for which hosts were actually billed.
+      const metricResult = await metricsClient.query({
+        acceptType: "application/json; charset=utf-8",
+        metricSelector: 'builtin:billing.full_stack_monitoring.usage_per_host:splitBy("dt.entity.host")',
+        resolution: "inf",
+        from: payload.from_time,
+        to: payload.to_time,
+      });
+
+      const billedHostIds = (metricResult.result?.[0]?.data ?? [])
+        .filter(d => (d.values?.[0] ?? 0) > 0)
+        .map(d => d.dimensionMap?.["dt.entity.host"] as string)
+        .filter(Boolean);
+
+      userLogger.info(`[get-entities] Metric-first fullstack: ${billedHostIds.length} billed hosts`);
+
+      if (billedHostIds.length > 0) {
+        const idList = billedHostIds.map(id => `"${id}"`).join(",");
+        const timeClause = (payload.from_time && payload.to_time)
+          ? `, from: "${payload.from_time}", to: "${payload.to_time}"`
+          : "";
+        const lookupDQL = `fetch dt.entity.host${timeClause} | filter in(id, array(${idList})) | fields entity.name, alias: name, id, tags`;
+        userLogger.info(`[get-entities] Tag lookup DQL for ${billedHostIds.length} hosts`);
+
+        const lookupResp = await queryExecutionClient.queryExecute({
+          body: {
+            query: lookupDQL,
+            requestTimeoutMilliseconds: 60000,
+            maxResultRecords: 1000000,
+            maxResultBytes: 104857600,
+            defaultTimeframeStart: payload.from_time,
+            defaultTimeframeEnd: payload.to_time,
+          },
+        });
+
+        if (lookupResp.result) {
+          for (const record of lookupResp.result.records) {
+            if (record?.name && record.id) {
+              entities.push({
+                name: record.name as string,
+                id: record.id as string,
+                tags: record.tags ? (record.tags as string[]) : [],
+              });
+            }
+          }
+        }
+        userLogger.info(`[get-entities] Tag lookup resolved ${entities.length} of ${billedHostIds.length} hosts`);
+      }
+    } else {
+      // Existing DQL approach for all other entity types
+      const fetchEntityDQL = buildDQL(rawPayload);
+      userLogger.info(`[get-entities] DQL: ${fetchEntityDQL}`);
+      // Reference with limits for each parameter:
+      // https://bitbucket.lab.dynatrace.org/projects/APPFW/repos/dynatrace-sdk/browse/packages/client/query/resources/spec.yaml
+      const executeResponse = await queryExecutionClient.queryExecute({
+        body: {
+          query: fetchEntityDQL,
+          requestTimeoutMilliseconds: 60000,
+          maxResultRecords: 1000000,
+          maxResultBytes: 104857600,
+          defaultTimeframeStart: payload.from_time,
+          defaultTimeframeEnd: payload.to_time,
+        },
+      });
+
+      if (executeResponse.result) {
+        for (const record of executeResponse.result.records) {
+          if (record?.name && record.id) {
+            entities.push({
+              name: record.name as string,
+              id: record.id as string,
+              tags: record.tags ? (record.tags as string[]) : [],
+            });
+          }
         }
       }
     }

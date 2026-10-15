@@ -6,6 +6,23 @@ All notable changes to this project since the fork from `dynatrace.cross.charge`
 
 ## [Unreleased]
 
+## [0.0.16]
+
+### Fixed
+- **Terminated hosts missing from full-stack billing** — for `full_stack` entities, `get-entities` now queries the billing metric `builtin:billing.full_stack_monitoring.usage_per_host:splitBy("dt.entity.host")` (resolution `inf`) for the billing date, collects host IDs with usage > 0, then looks those hosts up by ID via DQL. DQL entity queries alone only return currently active hosts, so VMSS instances that were reprovisioned were dropped (9 hosts returned vs 91 billed on the test tenant) (`actions/get-entities.action.ts`)
+- **Mobile application billing returned null** — the `mobile_application` billing metric uses `dt.entity.device_application` as its dimension; `buildBillingMetricKey()` now treats `mobile_application` the same as `custom_application` (`actions/get-billing-usage.action.ts`)
+
+### Added
+- **Backfill date override** — `get-billing-usage` and `get-entities` accept optional `from_time` / `to_time` (format `2026-09-20T00:00:00.000`, no trailing `Z`) to use a specific date instead of yesterday (`actions/get-billing-usage.action.ts`, `ui/shared/types/get-entities.ts`)
+- **Version logging** — `get-date-range` logs `[get-date-range] App version: <version>` on each execution so the running version can be verified from workflow logs (`actions/get-date-range.action.ts`)
+
+### Changed
+- `app.config.json` version bumped to 0.0.16
+
+---
+
+## [0.0.13 – 0.0.15] — previously unreleased
+
 ### Fixed
 - **Terminated host billing** — `get-entities` action now appends a time range clause (`from: "...", to: "..."`) to the DQL query when `from_time` and `to_time` are provided. Without this, `fetch dt.entity.*` only returns currently active entities, causing hosts that were terminated during the billing day to be silently excluded from cost calculations (`actions/get-entities.action.ts`, `ui/shared/types/get-entities.ts`)
 
